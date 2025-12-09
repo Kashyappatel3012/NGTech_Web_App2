@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/vapt_dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Additional Admin Dashboard Specific Styles */
+        .section-card {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .section-card h3 {
+            font-size: 1.2rem;
+            color: #34495e;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        
+        .section-card h3 i {
+            margin-right: 10px;
+            color: #64247d;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .action-btn i {
+            font-size: 1.1rem;
+        }
+        
+        .sub-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .sub-section h4 {
+            font-size: 1rem;
+            color: #555;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sub-section h4 i {
+            color: #64247d;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-user-shield"></i> Admin Dashboard</h2>
+                <p>Welcome, {{ user.employee_name }}</p>
+            </div>
+            <nav>
+                <a href="#employee-details-section" class="active"><i class="fas fa-users"></i> Employee Details</a>
+                <a href="#attendance-section"><i class="fas fa-calendar-check"></i> Attendance</a>
+                <a href="#active-ids-section"><i class="fas fa-id-card"></i> Active Ids/Employees</a>
+                <a href="#employee-performance-section"><i class="fas fa-chart-line"></i> Employee Performance</a>
+                <a href="#performance-record-section"><i class="fas fa-file-excel"></i> Employee Performance Record</a>
+                <a href="#log-activity-section"><i class="fas fa-history"></i> Log Activity</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Employee Details Section -->
+            <section id="employee-details-section" class="dashboard-section">
+                <h1><i class="fas fa-users"></i> Employee Details</h1>
+                <div class="employee-container">
+                    <div class="employee-card">
+                        <div class="employee-info">
+                            <img src="{{ url_for('static', filename='uploads/' + employee_data.photo) if employee_data and employee_data.photo else url_for('static', filename='images/default_avatar.jpg') }}" alt="Employee Photo" class="employee-img">
+                            <div class="employee-details">
+                                <h3>{{ user.employee_name }}</h3>
+                                <p><i class="fas fa-briefcase"></i> {{ employee_data.position if employee_data else 'Position not set' }}</p>
+                                <p><i class="fas fa-building"></i> {{ user.department }} Department</p>
+                                <p><i class="fas fa-clock"></i> {{ employee_data.experience if employee_data else 'Experience not set' }}</p>
+        </div>
+                        </div>
+                        <div class="employee-additional-info">
+                            <div class="info-row">
+                                <span><i class="fas fa-graduation-cap"></i> <strong>Education:</strong> {{ employee_data.education if employee_data else 'Not set' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span><i class="fas fa-certificate"></i> <strong>Certification:</strong> {{ employee_data.certifications if employee_data else 'Not set' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span><i class="fas fa-birthday-cake"></i> <strong>DOB:</strong> {{ employee_data.date_of_birth.strftime('%d/%m/%Y') if employee_data and employee_data.date_of_birth else 'Not set' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span><i class="fas fa-tint"></i> <strong>Blood Group:</strong> {{ employee_data.blood_group if employee_data else 'Not set' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span><i class="fas fa-envelope"></i> <strong>Email:</strong> {{ user.email }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span><i class="fas fa-phone"></i> <strong>Contact:</strong> {{ employee_data.contact_number if employee_data else 'Not set' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Attendance Section -->
+            <section id="attendance-section" class="dashboard-section">
+                <h1><i class="fas fa-calendar-check"></i> Attendance</h1>
+                <div class="section-card">
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="downloadDailyActivityTracker()">
+                            <i class="fas fa-download"></i>
+                            <span>Download Daily Activity Tracker</span>
+                        </button>
+                        <button class="action-btn" onclick="openTimeRangeTrackerModal()">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Download Activity Tracker for Specific Time</span>
+                        </button>
+                        <button class="action-btn" onclick="openAttendanceRecordModal()">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Attendance Record</span>
+                        </button>
+                        <button class="action-btn" onclick="openPersonalActivityTrackerModal()">
+                            <i class="fas fa-user-clock"></i>
+                            <span>Personal Activity Tracker</span>
+                        </button>
+                        <button class="action-btn" onclick="openClientWiseActivityTrackerModal()">
+                            <i class="fas fa-building"></i>
+                            <span>Client Vise Activity Tracker</span>
+                        </button>
+                        <button class="action-btn" onclick="openDownloadExtraWorkModal()">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Extra Work Activity Tracker</span>
+                        </button>
+                        <button class="action-btn" onclick="openAttendanceWithExtraWorkModal()">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Attendance Report with Extra Work</span>
+                        </button>
+            </div>
+                </div>
+            </section>
+
+            <!-- Active Ids/Employees Section -->
+            <section id="active-ids-section" class="dashboard-section">
+                <h1><i class="fas fa-id-card"></i> Active Ids/Employees</h1>
+                <div class="section-card">
+                    <h3><i class="fas fa-user-check"></i> Active Employees</h3>
+                    <div class="sub-section">
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="viewActiveEmployees()">
+                                <i class="fas fa-users"></i>
+                                <span>Active Employees ID</span>
+                            </button>
+            </div>
+        </div>
+                </div>
+                <div class="section-card">
+                    <h3><i class="fas fa-history"></i> Employee Records</h3>
+                    <div class="sub-section">
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="viewAllEmployees()">
+                                <i class="fas fa-list"></i>
+                                <span>All Employees ID Past Record</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Employee Performance Section -->
+            <section id="employee-performance-section" class="dashboard-section">
+                <h1><i class="fas fa-chart-line"></i> Employee Performance</h1>
+                <div class="section-card">
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="openTechnicalSkillsModal()">
+                            <i class="fas fa-code"></i>
+                            <span>Technical Skills</span>
+                        </button>
+                        <button class="action-btn" onclick="openClientSatisfactionModal()">
+                            <i class="fas fa-smile"></i>
+                            <span>Client Satisfaction</span>
+                        </button>
+            </div>
+                </div>
+            </section>
+
+            <!-- Employee Performance Record Section -->
+            <section id="performance-record-section" class="dashboard-section">
+                <h1><i class="fas fa-file-excel"></i> Employee Performance Record</h1>
+                <div class="section-card">
+                    <h3><i class="fas fa-chart-bar"></i> Performance Records</h3>
+                    <div class="sub-section">
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="viewEmployeePerformance()">
+                                <i class="fas fa-user-chart"></i>
+                                <span>Employee Performance</span>
+                            </button>
+                            <button class="action-btn" onclick="downloadPerformanceExcel()">
+                                <i class="fas fa-file-excel"></i>
+                                <span>In Excel file</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Log Activity Section -->
+            <section id="log-activity-section" class="dashboard-section">
+                <h1><i class="fas fa-history"></i> Log Activity</h1>
+                <div class="section-card">
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="showLogs('1day')">
+                            <i class="fas fa-clock"></i>
+                            <span>Show logs (last 1 day)</span>
+                        </button>
+                        <button class="action-btn" onclick="showLogs('1week')">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>Show logs (last 1 Week)</span>
+                        </button>
+                        <button class="action-btn" onclick="showLogs('1month')">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Show logs (last 1 month)</span>
+                        </button>
+                        <button class="action-btn" onclick="showLogs('all')">
+                            <i class="fas fa-list"></i>
+                            <span>Show all logs</span>
+                        </button>
+                        <button class="action-btn" onclick="downloadLogs()">
+                            <i class="fas fa-download"></i>
+                            <span>Download logs</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="logsContainer" class="section-card" style="display: none;">
+                    <h3><i class="fas fa-table"></i> Activity Logs</h3>
+                    <div id="logsContent"></div>
+                </div>
+            </section>
+        </div>
+        </div>
+
+    <!-- Attendance Modals -->
+    <div id="dailyTrackerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Download Daily Activity Tracker</h3>
+                <span class="close-modal" onclick="closeModal('dailyTrackerModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="dailyTrackerForm" method="POST" action="{{ url_for('admin_dashboard_bp.download_daily_activity_tracker') }}">
+                    <div class="form-group">
+                        <label>Select File*</label>
+                        <select name="tracker_date" id="trackerDateSelect" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Loading available files...</option>
+                        </select>
+                        <input type="hidden" name="selected_filename" id="selectedFilename" value="">
+                        <small id="trackerDateInfo" style="display: block; margin-top: 5px; color: #666;">Loading available files...</small>
+                        <div id="trackerDateError" style="display: none; color: #e74c3c; margin-top: 5px; font-size: 0.9rem;"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" id="trackerDownloadBtn" disabled>Download</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('dailyTrackerModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="timeRangeTrackerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Download Activity Tracker for Specific Time</h3>
+                <span class="close-modal" onclick="closeModal('timeRangeTrackerModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="timeRangeTrackerForm" method="POST" action="{{ url_for('admin_dashboard_bp.download_time_range_tracker') }}">
+                    <div class="form-group">
+                        <label>Start Date*</label>
+                        <input type="date" name="start_date" id="startDateInput" required min="2025-10-01" style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date*</label>
+                        <input type="date" name="end_date" id="endDateInput" required min="2025-10-01" style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div id="timeRangeError" style="display: none; color: #e74c3c; margin-top: 5px; font-size: 0.9rem;"></div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" id="timeRangeDownloadBtn">Download</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('timeRangeTrackerModal')">Cancel</button>
+            </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+    <div id="attendanceRecordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Attendance Record</h3>
+                <span class="close-modal" onclick="closeModal('attendanceRecordModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceRecordForm" method="POST" action="{{ url_for('admin_dashboard_bp.generate_attendance_record') }}">
+                    <div class="form-group">
+                        <label>Month*</label>
+                        <select name="month" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year*</label>
+                        <input type="number" name="year" min="2020" max="2030" value="2025" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Generate Report</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('attendanceRecordModal')">Cancel</button>
+            </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+    <div id="personalActivityTrackerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Personal Activity Tracker</h3>
+                <span class="close-modal" onclick="closeModal('personalActivityTrackerModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="personalActivityTrackerForm" method="POST" action="{{ url_for('admin_dashboard_bp.generate_personal_activity_tracker') }}">
+                    <div class="form-group">
+                        <label>Employee Name*</label>
+                        <select name="employee_name" id="employeeNameSelect" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Loading employees...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Month*</label>
+                        <select name="month" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year*</label>
+                        <input type="number" name="year" min="2020" max="2030" value="2025" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Generate Report</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('personalActivityTrackerModal')">Cancel</button>
+            </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+    <div id="clientWiseActivityTrackerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Client Wise Activity Tracker</h3>
+                <span class="close-modal" onclick="closeModal('clientWiseActivityTrackerModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="clientWiseActivityTrackerForm" method="POST" action="{{ url_for('admin_dashboard_bp.generate_client_wise_activity_tracker') }}">
+                    <div class="form-group">
+                        <label>Month*</label>
+                        <select name="month" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year*</label>
+                        <input type="number" name="year" min="2020" max="2030" value="2025" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Generate Report</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('clientWiseActivityTrackerModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="downloadExtraWorkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Download Extra Work Activity Tracker</h3>
+                <span class="close-modal" onclick="closeModal('downloadExtraWorkModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="downloadExtraWorkForm" method="POST" action="{{ url_for('admin_dashboard_bp.download_approved_extra_work') }}">
+                    <div class="form-group">
+                        <label>Month*</label>
+                        <select name="month" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year*</label>
+                        <input type="number" name="year" min="2020" max="2030" value="2025" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Download</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('downloadExtraWorkModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+            </div>
+            
+    <div id="attendanceWithExtraWorkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Attendance Report with Extra Work</h3>
+                <span class="close-modal" onclick="closeModal('attendanceWithExtraWorkModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceWithExtraWorkForm" method="POST" action="{{ url_for('admin_dashboard_bp.generate_attendance_with_extra_work') }}">
+                    <div class="form-group">
+                        <label>Month*</label>
+                        <select name="month" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year*</label>
+                        <input type="number" name="year" min="2020" max="2030" value="2025" required style="width: 100%; padding: 10px; font-size: 1rem;">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Generate Report</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('attendanceWithExtraWorkModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+            </div>
+            
+    <!-- Active Employees Modal -->
+    <div id="activeEmployeesModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; width: 90%;">
+            <div class="modal-header">
+                <h3>Active Employees ID</h3>
+                <span class="close-modal" onclick="closeModal('activeEmployeesModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="activeEmployeesLoading" style="text-align: center; padding: 20px;">
+                    <p>Loading active employees...</p>
+                </div>
+                <div id="activeEmployeesContent" style="display: none;">
+                    <div style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                        <table id="activeEmployeesTable" style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                        <thead>
+                                <tr style="background-color: #366092; color: white; position: sticky; top: 0;">
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Sr. No</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Employee Name</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Employee ID</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Department/Team</th>
+                            </tr>
+                        </thead>
+                            <tbody id="activeEmployeesTableBody">
+                                <!-- Employees will be populated here -->
+                            </tbody>
+            </table>
+        </div>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button type="button" class="cancel-btn" onclick="closeModal('activeEmployeesModal')">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Employees Past Record Modal -->
+    <div id="allEmployeesPastRecordModal" class="modal">
+        <div class="modal-content" style="max-width: 1400px; width: 95%;">
+            <div class="modal-header">
+                <h3>All Employees ID Past Record</h3>
+                <span class="close-modal" onclick="closeModal('allEmployeesPastRecordModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="allEmployeesLoading" style="text-align: center; padding: 20px;">
+                    <p>Loading employee records...</p>
+                </div>
+                <div id="allEmployeesContent" style="display: none;">
+                    <div style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                        <table id="allEmployeesTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="background-color: #366092; color: white; position: sticky; top: 0;">
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Sr. No</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Employee Name</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Employee ID</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Department/Team</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">ID Creation Time</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">ID Delete/Remove Time</th>
+                                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Activate/Deactivate</th>
+                            </tr>
+            </thead>
+                            <tbody id="allEmployeesTableBody">
+                                <!-- Employees will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button type="button" class="cancel-btn" onclick="closeModal('allEmployeesPastRecordModal')">Close</button>
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Performance Modals -->
+    <!-- Technical Skills Modal -->
+    <div id="technicalSkillsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Technical Skills - Employee Performance</h3>
+                <span class="close-modal" onclick="closeModal('technicalSkillsModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="technicalSkillsForm">
+                    <div style="margin-bottom: 15px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
+                        <p style="margin: 0; color: #666;"><strong>Note:</strong> Enter ratings from 1-10 for each employee. Data will be saved for the current month.</p>
+                    </div>
+                    <div id="technicalSkillsEmployeesList" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Employee inputs will be populated here -->
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" id="technicalSkillsSubmitBtn">Save Technical Skills Ratings</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('technicalSkillsModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Satisfaction Modal -->
+    <div id="clientSatisfactionModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Client Satisfaction - Employee Performance</h3>
+                <span class="close-modal" onclick="closeModal('clientSatisfactionModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="clientSatisfactionForm">
+                    <div style="margin-bottom: 15px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
+                        <p style="margin: 0; color: #666;"><strong>Note:</strong> Enter ratings from 1-10 for each employee. Data will be saved for the current month.</p>
+                    </div>
+                    <div id="clientSatisfactionEmployeesList" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Employee inputs will be populated here -->
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" id="clientSatisfactionSubmitBtn">Save Client Satisfaction Ratings</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('clientSatisfactionModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Performance View Modal -->
+    <div id="employeePerformanceViewModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px; width: 95%;">
+            <div class="modal-header">
+                <h3>Employee Performance Records</h3>
+                <span class="close-modal" onclick="closeModal('employeePerformanceViewModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="employeePerformanceList" style="max-height: 600px; overflow-y: auto;">
+                    <!-- Employee list will be populated here -->
+                </div>
+            </div>
+        </div>
+            </div>
+            
+    <!-- Download Logs Modal -->
+    <div id="downloadLogsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Download Activity Logs</h3>
+                <span class="close-modal" onclick="closeModal('downloadLogsModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="logFilesLoading" style="text-align: center; padding: 20px;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading available log files...
+                </div>
+                <div id="logFilesList" style="display: none; max-height: 500px; overflow-y: auto;">
+                    <!-- Log files will be populated here -->
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="cancel-btn" onclick="closeModal('downloadLogsModal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Chart Modal -->
+    <div id="performanceChartModal" class="modal">
+        <div class="modal-content" style="max-width: 1400px; width: 95%;">
+            <div class="modal-header">
+                <h3 id="chartModalTitle">Employee Performance Chart</h3>
+                <span class="close-modal" onclick="closePerformanceChartModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="singleChartContainer" style="text-align: center; padding: 20px;">
+                    <canvas id="performanceChartCanvas" style="max-width: 100%; max-height: 500px;"></canvas>
+                </div>
+                <div id="multipleChartsContainer" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px;">
+                        <div style="text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: #366092;">Punctuality</h4>
+                            <canvas id="chartPunctuality" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: #366092;">Client Satisfaction</h4>
+                            <canvas id="chartClientSatisfaction" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: #366092;">Behaviour</h4>
+                            <canvas id="chartBehaviour" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: #366092;">Communication Skills</h4>
+                            <canvas id="chartCommunicationSkills" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: #366092;">Technical Skills</h4>
+                            <canvas id="chartTechnicalSkills" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: #366092;">Team Coordination</h4>
+                            <canvas id="chartTeamCoordination" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="cancel-btn" onclick="closePerformanceChartModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation handling
+        document.querySelectorAll('.sidebar nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+                    this.classList.add('active');
+                    const targetId = this.getAttribute('href').substring(1);
+                    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Active Employees Functions
+        function viewActiveEmployees() {
+            openModal('activeEmployeesModal');
+            loadActiveEmployees();
+        }
+
+        function loadActiveEmployees() {
+            const loadingDiv = document.getElementById('activeEmployeesLoading');
+            const contentDiv = document.getElementById('activeEmployeesContent');
+            const tableBody = document.getElementById('activeEmployeesTableBody');
+            
+            loadingDiv.style.display = 'block';
+            contentDiv.style.display = 'none';
+            tableBody.innerHTML = '';
+            
+            fetch('/admin/get_active_employees')
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';
+                    contentDiv.style.display = 'block';
+                    
+                    if (data.success && data.employees && data.employees.length > 0) {
+                        data.employees.forEach((employee, index) => {
+                            const row = document.createElement('tr');
+                            row.style.borderBottom = '1px solid #ddd';
+                            row.innerHTML = `
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.employee_name || 'N/A'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.employee_id || 'N/A'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.department_team || 'N/A'}</td>
+                            `;
+                            // Alternate row colors for better readability
+                            if (index % 2 === 0) {
+                                row.style.backgroundColor = '#f9f9f9';
+                            }
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">
+                                    No active employees found.
+                                </td>
+                </tr>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    contentDiv.style.display = 'block';
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="padding: 20px; text-align: center; color: #e74c3c;">
+                                Error loading active employees. Please try again.
+                    </td>
+                </tr>
+                    `;
+                    console.error('Error loading active employees:', error);
+                });
+        }
+
+        function viewAllEmployees() {
+            openModal('allEmployeesPastRecordModal');
+            loadAllEmployeesPastRecord();
+        }
+
+        function loadAllEmployeesPastRecord() {
+            const loadingDiv = document.getElementById('allEmployeesLoading');
+            const contentDiv = document.getElementById('allEmployeesContent');
+            const tableBody = document.getElementById('allEmployeesTableBody');
+            
+            loadingDiv.style.display = 'block';
+            contentDiv.style.display = 'none';
+            tableBody.innerHTML = '';
+            
+            fetch('/admin/get_all_employees_past_record')
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';
+                    contentDiv.style.display = 'block';
+                    
+                    if (data.success && data.employees && data.employees.length > 0) {
+                        data.employees.forEach((employee, index) => {
+                            const row = document.createElement('tr');
+                            row.style.borderBottom = '1px solid #ddd';
+                            
+                            // Determine status color
+                            const statusColor = employee.status === 'Activate' ? '#27ae60' : '#e74c3c';
+                            
+                            row.innerHTML = `
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.employee_name || 'N/A'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.employee_id || 'N/A'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.department_team || 'N/A'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.creation_time || 'N/A'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${employee.deletion_time || '-'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: ${statusColor}; font-weight: bold;">${employee.status || 'N/A'}</td>
+                            `;
+                            // Alternate row colors for better readability
+                            if (index % 2 === 0) {
+                                row.style.backgroundColor = '#f9f9f9';
+                            }
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="padding: 20px; text-align: center; color: #666;">
+                                    No employee records found.
+                    </td>
+                </tr>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    contentDiv.style.display = 'block';
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="padding: 20px; text-align: center; color: #e74c3c;">
+                                Error loading employee records. Please try again.
+                    </td>
+                </tr>
+                    `;
+                    console.error('Error loading employee records:', error);
+                });
+        }
+
+        // Employee Performance Functions
+        function loadEmployeesForPerformance(metricType) {
+            return fetch('/admin/get_all_employees_for_performance')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.employees) {
+                        return data.employees;
+                    }
+                    return [];
+                })
+                .catch(error => {
+                    console.error('Error loading employees:', error);
+                    return [];
+                });
+        }
+
+        function populateEmployeeList(containerId, employees) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            employees.forEach(employee => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee;';
+                row.innerHTML = `
+                    <div style="flex: 1; font-weight: 500;">${employee.employee_name}</div>
+                    <div style="flex: 0 0 200px;">
+                        <input type="number" 
+                               name="employee_${employee.id}" 
+                               data-employee-id="${employee.id}"
+                               min="1" 
+                               max="10" 
+                               step="0.1"
+                               placeholder="1-10"
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                               required>
+        </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        async function openTechnicalSkillsModal() {
+            openModal('technicalSkillsModal');
+            const employees = await loadEmployeesForPerformance('technical_skills');
+            populateEmployeeList('technicalSkillsEmployeesList', employees);
+        }
+
+        async function openClientSatisfactionModal() {
+            openModal('clientSatisfactionModal');
+            const employees = await loadEmployeesForPerformance('client_satisfaction');
+            populateEmployeeList('clientSatisfactionEmployeesList', employees);
+        }
+
+        // Initialize performance form handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Technical Skills form
+            document.getElementById('technicalSkillsForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await handlePerformanceSubmit('technicalSkillsForm', 'technical_skills', 'technicalSkillsSubmitBtn', 'technicalSkillsModal');
+            });
+
+            // Client Satisfaction form
+            document.getElementById('clientSatisfactionForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await handlePerformanceSubmit('clientSatisfactionForm', 'client_satisfaction', 'clientSatisfactionSubmitBtn', 'clientSatisfactionModal');
+            });
+        });
+
+        async function handlePerformanceSubmit(formId, metricType, submitBtnId, modalId) {
+            const form = document.getElementById(formId);
+            const submitBtn = document.getElementById(submitBtnId);
+            
+            const formData = new FormData();
+            const inputs = form.querySelectorAll('input[type="number"]');
+            let hasData = false;
+            let hasError = false;
+            
+            inputs.forEach(input => {
+                const employeeId = input.getAttribute('data-employee-id');
+                const value = parseFloat(input.value);
+                const employeeName = input.closest('div').previousElementSibling.textContent.trim();
+                
+                if (input.value !== '' && !isNaN(value)) {
+                    if (value < 1 || value > 10) {
+                        alert(`Rating for ${employeeName} must be between 1 and 10`);
+                        hasError = true;
+                        return;
+                    }
+                    formData.append(`employee_${employeeId}`, value);
+                    hasData = true;
+                }
+            });
+            
+            if (hasError) return;
+            
+            if (!hasData) {
+                alert('Please enter at least one rating');
+                return;
+            }
+            
+            formData.append('metric_type', metricType);
+            
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                const response = await fetch('/admin/save_performance_data', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message || 'Performance data saved successfully!');
+                    closeModal(modalId);
+                    form.reset();
+                } else {
+                    alert(`Error: ${data.message || 'Failed to save performance data'}`);
+                }
+            } catch (error) {
+                console.error('Error saving performance data:', error);
+                alert('Error saving performance data. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // Performance Record Functions
+        let performanceChartInstance = null;
+        let performanceChartInstances = [];
+
+        async function viewEmployeePerformance() {
+            openModal('employeePerformanceViewModal');
+            await loadEmployeesForPerformanceView();
+        }
+
+        async function loadEmployeesForPerformanceView() {
+            const container = document.getElementById('employeePerformanceList');
+            container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading employees...</div>';
+            
+            try {
+                const response = await fetch('/admin/get_all_employees_for_performance');
+                const data = await response.json();
+                
+                if (data.success && data.employees) {
+                    container.innerHTML = '';
+                    
+                    if (data.employees.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No employees found.</div>';
+                        return;
+                    }
+                    
+                    data.employees.forEach(employee => {
+                        const employeeCard = document.createElement('div');
+                        employeeCard.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;';
+                        employeeCard.innerHTML = `
+                            <div style="flex: 1; font-weight: 500; font-size: 16px;">${employee.employee_name}</div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="action-btn" onclick="showLastMonthPerformance(${employee.id}, '${employee.employee_name}')" style="padding: 8px 15px; font-size: 14px;">
+                                    <i class="fas fa-chart-bar"></i> Last Month
+                                </button>
+                                <button class="action-btn" onclick="showLastYearPerformance(${employee.id}, '${employee.employee_name}')" style="padding: 8px 15px; font-size: 14px;">
+                                    <i class="fas fa-chart-bar"></i> Last Year
+                                </button>
+                                <button class="action-btn" onclick="showPerformanceGrowth(${employee.id}, '${employee.employee_name}')" style="padding: 8px 15px; font-size: 14px;">
+                                    <i class="fas fa-chart-line"></i> Growth
+                                </button>
+    </div>
+                        `;
+                        container.appendChild(employeeCard);
+                    });
+                } else {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #d32f2f;">Error loading employees.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #d32f2f;">Error loading employees. Please try again.</div>';
+            }
+        }
+
+        function closePerformanceChartModal() {
+            // Destroy single chart if exists
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+                performanceChartInstance = null;
+            }
+            // Destroy multiple charts if exist
+            performanceChartInstances.forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            performanceChartInstances = [];
+            closeModal('performanceChartModal');
+        }
+
+        async function showLastMonthPerformance(employeeId, employeeName) {
+            try {
+                const response = await fetch(`/admin/get_employee_last_month_performance/${employeeId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const performanceData = data.performance || {};
+                    displayLastMonthBarChart(performanceData, employeeName);
+                } else {
+                    alert('Error loading performance data: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error loading last month performance:', error);
+                alert('Error loading performance data. Please try again.');
+            }
+        }
+
+        async function showLastYearPerformance(employeeId, employeeName) {
+            try {
+                const response = await fetch(`/admin/get_employee_last_year_performance/${employeeId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayLastYearBarChart(data.performance_history || [], employeeName);
+                } else {
+                    alert('Error loading performance data: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error loading last year performance:', error);
+                alert('Error loading performance data. Please try again.');
+            }
+        }
+
+        async function showPerformanceGrowth(employeeId, employeeName) {
+            try {
+                const response = await fetch(`/admin/get_employee_performance_growth/${employeeId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayPerformanceGrowthChart(data.performance_history || [], employeeName);
+                } else {
+                    alert('Error loading performance data: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error loading performance growth:', error);
+                alert('Error loading performance data. Please try again.');
+            }
+        }
+
+        function displayLastMonthBarChart(performanceData, employeeName) {
+            document.getElementById('chartModalTitle').textContent = `${employeeName} - Last Month Performance`;
+            openModal('performanceChartModal');
+            
+            // Show single chart container, hide multiple charts container
+            document.getElementById('singleChartContainer').style.display = 'block';
+            document.getElementById('multipleChartsContainer').style.display = 'none';
+            
+            // Destroy existing charts if any
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+            performanceChartInstances.forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            performanceChartInstances = [];
+            
+            const ctx = document.getElementById('performanceChartCanvas').getContext('2d');
+            
+            const perfScores = [
+                performanceData.punctuality || 0,
+                performanceData.client_satisfaction || 0,
+                performanceData.behaviour || 0,
+                performanceData.communication_skills || 0,
+                performanceData.technical_skills || 0,
+                performanceData.team_coordination || 0
+            ];
+            
+            function getBarColor(score) {
+                if (score <= 6) return 'rgba(255, 99, 132, 0.8)';
+                if (score <= 8) return 'rgba(255, 206, 86, 0.8)';
+                return 'rgba(75, 192, 192, 0.8)';
+            }
+            
+            function getBarBorderColor(score) {
+                if (score <= 6) return 'rgba(255, 99, 132, 1)';
+                if (score <= 8) return 'rgba(255, 206, 86, 1)';
+                return 'rgba(75, 192, 192, 1)';
+            }
+            
+            const barColors = perfScores.map(getBarColor);
+            const barBorderColors = perfScores.map(getBarBorderColor);
+            
+            performanceChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Punctuality',
+                        'Client\nSatisfaction',
+                        'Behaviour',
+                        'Communication\nSkills',
+                        'Technical\nSkills',
+                        'Team\nCoordination'
+                    ],
+                    datasets: [{
+                        label: 'Performance Metrics',
+                        data: perfScores,
+                        backgroundColor: barColors,
+                        borderColor: barBorderColors,
+                        borderWidth: 2,
+                        barPercentage: 1.5,
+                        categoryPercentage: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                font: { size: 12 },
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.split('\n');
+                                },
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        function displayLastYearBarChart(performanceHistory, employeeName) {
+            document.getElementById('chartModalTitle').textContent = `${employeeName} - Last Year Performance`;
+            openModal('performanceChartModal');
+            
+            // Hide single chart container, show multiple charts container
+            document.getElementById('singleChartContainer').style.display = 'none';
+            document.getElementById('multipleChartsContainer').style.display = 'block';
+            
+            // Destroy existing charts if any
+            performanceChartInstances.forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            performanceChartInstances = [];
+            
+            const labels = performanceHistory.map(item => `${item.month_name}\n'${item.year_short}`);
+            
+            // Define metrics and their corresponding canvas IDs
+            const metrics = [
+                { key: 'punctuality', canvasId: 'chartPunctuality', label: 'Punctuality' },
+                { key: 'client_satisfaction', canvasId: 'chartClientSatisfaction', label: 'Client Satisfaction' },
+                { key: 'behaviour', canvasId: 'chartBehaviour', label: 'Behaviour' },
+                { key: 'communication_skills', canvasId: 'chartCommunicationSkills', label: 'Communication Skills' },
+                { key: 'technical_skills', canvasId: 'chartTechnicalSkills', label: 'Technical Skills' },
+                { key: 'team_coordination', canvasId: 'chartTeamCoordination', label: 'Team Coordination' }
+            ];
+            
+            function getBarColor(score) {
+                if (score <= 6) return 'rgba(255, 99, 132, 0.8)';
+                if (score <= 8) return 'rgba(255, 206, 86, 0.8)';
+                return 'rgba(75, 192, 192, 0.8)';
+            }
+            
+            function getBarBorderColor(score) {
+                if (score <= 6) return 'rgba(255, 99, 132, 1)';
+                if (score <= 8) return 'rgba(255, 206, 86, 1)';
+                return 'rgba(75, 192, 192, 1)';
+            }
+            
+            // Create a chart for each metric
+            metrics.forEach(metric => {
+                const data = performanceHistory.map(item => item[metric.key] || 0);
+                const barColors = data.map(getBarColor);
+                const barBorderColors = data.map(getBarBorderColor);
+                
+                const ctx = document.getElementById(metric.canvasId).getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: metric.label,
+                            data: data,
+                            backgroundColor: barColors,
+                            borderColor: barBorderColors,
+                            borderWidth: 2,
+                            barPercentage: 0.8,
+                            categoryPercentage: 0.6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Score: ' + context.parsed.y.toFixed(2);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: { size: 10 },
+                                    maxRotation: 0,
+                                    minRotation: 0
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                ticks: {
+                                    font: { size: 10 }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                performanceChartInstances.push(chart);
+            });
+        }
+
+        function displayPerformanceGrowthChart(performanceHistory, employeeName) {
+            document.getElementById('chartModalTitle').textContent = `${employeeName} - Performance Growth`;
+            openModal('performanceChartModal');
+            
+            // Show single chart container, hide multiple charts container
+            document.getElementById('singleChartContainer').style.display = 'block';
+            document.getElementById('multipleChartsContainer').style.display = 'none';
+            
+            // Destroy existing charts if any
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+            performanceChartInstances.forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            performanceChartInstances = [];
+            
+            const ctx = document.getElementById('performanceChartCanvas').getContext('2d');
+            
+            const labels = performanceHistory.map(item => `${item.month_name}\n'${item.year_short}`);
+            const data = performanceHistory.map(item => item.average || 0);
+            
+            performanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Performance Trend',
+                        data: data,
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Score: ' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { size: 11 },
+                                maxRotation: 0,
+                                minRotation: 0
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function downloadPerformanceExcel() {
+            // Create a link to download the Excel file
+            const link = document.createElement('a');
+            link.href = '/admin/download_performance_excel';
+            link.download = 'Performance_data.xlsx';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Log Activity Functions
+        function showLogs(period) {
+            const container = document.getElementById('logsContainer');
+            const content = document.getElementById('logsContent');
+            
+            container.style.display = 'block';
+            content.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
+            
+            // Fetch logs based on period
+            fetch(`/admin/get_logs?period=${period}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // For all periods (1day, 1week, 1month, all), show message about suspicious activities
+                        if (period === '1day' || period === '1week' || period === '1month' || period === 'all') {
+                            displayLogs(data.logs, data.count, true, period);
+                        } else {
+                            displayLogs(data.logs, data.count, false, period);
+                        }
+                    } else {
+                        content.innerHTML = `<div style="color: #d32f2f; padding: 20px; text-align: center;">Error: ${data.message || 'Failed to load logs'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading logs:', error);
+                    content.innerHTML = '<div style="color: #d32f2f; padding: 20px; text-align: center;">Error loading logs. Please try again.</div>';
+                });
+        }
+
+        function displayLogs(logs, count, showSuspiciousOnly = false, period = 'all') {
+            const content = document.getElementById('logsContent');
+            
+            if (!logs || logs.length === 0) {
+                let message = 'No logs found for the selected period.';
+                if (showSuspiciousOnly) {
+                    if (period === '1day') {
+                        message = 'No suspicious activities found in the last 24 hours.';
+                    } else if (period === '1week') {
+                        message = 'No suspicious activities found in the last 7 days.';
+                    } else if (period === '1month') {
+                        message = 'No suspicious activities found in the last 30 days.';
+                    } else if (period === 'all') {
+                        message = 'No suspicious activities found in the last 1 year.';
+                    }
+                }
+                content.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">${message}</div>`;
+                return;
+            }
+            
+            // Count suspicious and main activities
+            const suspiciousCount = logs.filter(log => log.is_suspicious === true).length;
+            const mainActivityCount = logs.filter(log => log.is_main_activity === true).length;
+            
+            // Determine period text
+            let periodText = '';
+            if (period === '1day') {
+                periodText = 'last 24 hours';
+            } else if (period === '1week') {
+                periodText = 'last 7 days';
+            } else if (period === '1month') {
+                periodText = 'last 30 days';
+            } else if (period === 'all') {
+                periodText = 'last 1 year';
+            }
+            
+            let html = `
+                <div style="margin-bottom: 15px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
+                    <strong>Total Logs: ${count}</strong>
+                    ${showSuspiciousOnly ? `
+                        <br>
+                        <span style="color: #c62828; font-weight: bold;">⚠️ Suspicious Activities: ${suspiciousCount}</span>
+                        <span style="color: #2e7d32; font-weight: bold;">✓ Main Activities: ${mainActivityCount}</span>
+                        <br><small style="color: #666;">Showing only suspicious activities and main activities (login, reports, etc.) from ${periodText}</small>
+                    ` : ''}
+                </div>
+                <div style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background-color: #366092; color: white; position: sticky; top: 0;">
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Timestamp</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">User</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Department</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">IP Address</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Activity Type</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Description</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Request URL</th>
+                </tr>
+            </thead>
+            <tbody>
+            `;
+            
+            logs.forEach(log => {
+                // Determine row style based on suspicious flag
+                const isSuspicious = log.is_suspicious === true;
+                const isMainActivity = log.is_main_activity === true;
+                const rowStyle = isSuspicious 
+                    ? 'background-color: #ffebee; border-bottom: 1px solid #ddd;' 
+                    : isMainActivity
+                    ? 'background-color: #e8f5e9; border-bottom: 1px solid #ddd;'
+                    : 'border-bottom: 1px solid #ddd;';
+                
+                // Add suspicion reasons if available
+                const suspicionInfo = log.suspicion_reasons && log.suspicion_reasons.length > 0
+                    ? `<br><small style="color: #c62828; font-weight: bold;">⚠️ ${log.suspicion_reasons.join(', ')}</small>`
+                    : '';
+                
+                html += `
+                    <tr style="${rowStyle}">
+                        <td style="padding: 10px; border: 1px solid #ddd;">${log.timestamp || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${log.employee_name || log.username || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${log.department || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${log.ip_address || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">
+                            ${log.activity_type || '-'}
+                            ${isSuspicious ? '<span style="color: #c62828; font-weight: bold;"> ⚠️ SUSPICIOUS</span>' : ''}
+                            ${isMainActivity ? '<span style="color: #2e7d32; font-weight: bold;"> ✓ MAIN</span>' : ''}
+                    </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; max-width: 300px; word-wrap: break-word;">
+                            ${log.activity_description || '-'}
+                            ${suspicionInfo}
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; max-width: 200px; word-wrap: break-word;">${log.request_url || '-'}</td>
+                </tr>
+                `;
+            });
+            
+            html += `
+            </tbody>
+        </table>
+    </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+
+        function downloadLogs() {
+            openModal('downloadLogsModal');
+            loadAvailableLogFiles();
+        }
+
+        async function loadAvailableLogFiles() {
+            const loadingDiv = document.getElementById('logFilesLoading');
+            const filesListDiv = document.getElementById('logFilesList');
+            
+            loadingDiv.style.display = 'block';
+            filesListDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/admin/get_available_log_files');
+                const data = await response.json();
+                
+                if (data.success && data.log_files) {
+                    loadingDiv.style.display = 'none';
+                    filesListDiv.style.display = 'block';
+                    
+                    if (data.log_files.length === 0) {
+                        filesListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No log files found.</div>';
+                        return;
+                    }
+                    
+                    let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                    
+                    data.log_files.forEach(file => {
+                        html += `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; cursor: pointer; transition: background-color 0.2s;"
+                                 onmouseover="this.style.backgroundColor='#f0f0f0'"
+                                 onmouseout="this.style.backgroundColor='#f9f9f9'"
+                                 onclick="downloadLogFile('${file.filename}')">
+                                <div style="font-weight: 500; font-size: 16px;">
+                                    <i class="fas fa-file-excel" style="color: #2e7d32; margin-right: 10px;"></i>
+                                    ${file.display_name}
+</div>
+                                <div>
+                                    <i class="fas fa-download" style="color: #366092;"></i>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    filesListDiv.innerHTML = html;
+                } else {
+                    loadingDiv.innerHTML = '<div style="color: #d32f2f; padding: 20px; text-align: center;">Error loading log files: ' + (data.message || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error loading log files:', error);
+                loadingDiv.innerHTML = '<div style="color: #d32f2f; padding: 20px; text-align: center;">Error loading log files. Please try again.</div>';
+            }
+        }
+
+        function downloadLogFile(filename) {
+            // Create download link
+            const link = document.createElement('a');
+            link.href = `/admin/download_log_file/${encodeURIComponent(filename)}`;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Close modal after a short delay
+            setTimeout(() => {
+                closeModal('downloadLogsModal');
+            }, 500);
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Attendance functions
+        function downloadDailyActivityTracker() {
+            openModal('dailyTrackerModal');
+            loadAvailableTrackerDates();
+        }
+
+        function loadAvailableTrackerDates() {
+            const select = document.getElementById('trackerDateSelect');
+            const info = document.getElementById('trackerDateInfo');
+            const errorDiv = document.getElementById('trackerDateError');
+            const downloadBtn = document.getElementById('trackerDownloadBtn');
+            const filenameInput = document.getElementById('selectedFilename');
+            
+            select.innerHTML = '<option value="">Loading available files...</option>';
+            select.disabled = true;
+            downloadBtn.disabled = true;
+            errorDiv.style.display = 'none';
+            info.textContent = 'Loading available files...';
+            
+            fetch('/admin/get_available_tracker_dates')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.dates && data.dates.length > 0) {
+                        select.innerHTML = '<option value="">Select a file</option>';
+                        data.dates.forEach(dateInfo => {
+                            const option = document.createElement('option');
+                            option.value = dateInfo.date;
+                            option.textContent = dateInfo.display;
+                            option.setAttribute('data-filename', dateInfo.filename);
+                            select.appendChild(option);
+                        });
+                        
+                        info.textContent = `${data.dates.length} file(s) available for download.`;
+                        select.disabled = false;
+                        
+                        // Add event listener for selection change
+                        select.addEventListener('change', function() {
+                            const selectedOption = select.options[select.selectedIndex];
+                            if (selectedOption.value) {
+                                filenameInput.value = selectedOption.getAttribute('data-filename');
+                                downloadBtn.disabled = false;
+                                errorDiv.style.display = 'none';
+                            } else {
+                                filenameInput.value = '';
+                                downloadBtn.disabled = true;
+                            }
+                        });
+                    } else {
+                        select.innerHTML = '<option value="">No files available</option>';
+                        info.textContent = 'No activity tracker files found in the system.';
+                        select.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading available files:', error);
+                    select.innerHTML = '<option value="">Error loading files</option>';
+                    info.textContent = 'Error loading available files. Please try again.';
+                    select.disabled = true;
+                });
+        }
+
+        function openTimeRangeTrackerModal() {
+            openModal('timeRangeTrackerModal');
+            initializeTimeRangeForm();
+        }
+
+        function initializeTimeRangeForm() {
+            const startDateInput = document.getElementById('startDateInput');
+            const endDateInput = document.getElementById('endDateInput');
+            const errorDiv = document.getElementById('timeRangeError');
+            const downloadBtn = document.getElementById('timeRangeDownloadBtn');
+            
+            // Set max date to today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().split('T')[0];
+            
+            startDateInput.setAttribute('max', todayStr);
+            endDateInput.setAttribute('max', todayStr);
+            
+            // Clear previous values
+            startDateInput.value = '';
+            endDateInput.value = '';
+            errorDiv.style.display = 'none';
+            downloadBtn.disabled = false;
+            
+            // Add validation for date range
+            function validateDateRange() {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                
+                if (startDate && endDate) {
+                    if (startDate > endDate) {
+                        errorDiv.textContent = 'Start date must be before or equal to end date.';
+                        errorDiv.style.display = 'block';
+                        downloadBtn.disabled = true;
+                    } else {
+                        errorDiv.style.display = 'none';
+                        downloadBtn.disabled = false;
+                    }
+                } else {
+                    errorDiv.style.display = 'none';
+                    downloadBtn.disabled = false;
+                }
+            }
+            
+            startDateInput.addEventListener('change', validateDateRange);
+            endDateInput.addEventListener('change', validateDateRange);
+        }
+
+        function openAttendanceRecordModal() {
+            openModal('attendanceRecordModal');
+        }
+
+        function openPersonalActivityTrackerModal() {
+            openModal('personalActivityTrackerModal');
+            loadPersonalTrackerEmployeeList();
+        }
+
+        function loadPersonalTrackerEmployeeList() {
+            const select = document.getElementById('employeeNameSelect');
+            select.innerHTML = '<option value="">Loading employees...</option>';
+            select.disabled = true;
+            
+            fetch('/admin/get_all_employees')
+                .then(response => response.json())
+                .then(data => {
+                    select.innerHTML = '<option value="">Select Employee</option>';
+                    
+                    if (data.success && data.employees) {
+                        data.employees.forEach(employee => {
+                            const option = document.createElement('option');
+                            option.value = employee.employee_name;
+                            option.textContent = employee.employee_name;
+                            select.appendChild(option);
+                        });
+                        select.disabled = false;
+                    } else {
+                        select.innerHTML = '<option value="">No employees found</option>';
+                        select.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading employees:', error);
+                    select.innerHTML = '<option value="">Error loading employees</option>';
+                    select.disabled = true;
+                });
+        }
+
+        function openClientWiseActivityTrackerModal() {
+            openModal('clientWiseActivityTrackerModal');
+        }
+
+        function openDownloadExtraWorkModal() {
+            openModal('downloadExtraWorkModal');
+        }
+
+        function openAttendanceWithExtraWorkModal() {
+            openModal('attendanceWithExtraWorkModal');
+        }
+    </script>
+</body>
+</html>

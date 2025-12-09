@@ -1,0 +1,26 @@
+Database already exists - keeping existing data
+Testing fingerprint validation...
+HR Manager: hr_user (ID: 5)
+Stored fingerprint: 6fc7c55b2ee9afd4dd8e9454b3a93ca6
+Length: 32
+
+Testing with fingerprint: 6fc7c55b2ee9afd4dd8e9454b3a93ca6
+Traceback (most recent call last):
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\test_validation.py", line 37, in <module>
+    is_valid, user_found = validate_browser_fingerprint(test_fp, hr)
+                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\app.py", line 445, in validate_browser_fingerprint
+    enc_manager = get_encryption_manager()
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\encryption_utils.py", line 202, in get_encryption_manager
+    _encryption_manager = EncryptionManager()
+Traceback (most recent call last):
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\test_validation.py", line 37, in <module>
+    is_valid, user_found = validate_browser_fingerprint(test_fp, hr)
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\app.py", line 445, in validate_browser_fingerprint
+    enc_manager = get_encryption_manager()
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\encryption_utils.py", line 202, in get_encryption_manager
+    _encryption_manager = EncryptionManager()
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\encryption_utils.py", line 37, in __init__
+      File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 0-1: character maps to <undefined>

@@ -1,0 +1,25 @@
+# Flask and Core Dependencies
+Flask>=3.0.0
+flask-sqlalchemy>=3.1.0
+flask-login>=0.6.3
+flask-mail>=0.9.1
+flask-session>=0.6.0
+werkzeug>=3.0.0
+
+# Database Drivers
+# SQLite is included with Python, no package needed
+psycopg2-binary>=2.9.0  # PostgreSQL driver for production
+
+# SQLAlchemy
+SQLAlchemy>=2.0.0
+
+# Utilities
+pytz>=2023.3  # Timezone support
+
+# Encryption
+cryptography>=41.0.0  # For AES-256-GCM encryption
+
+# Additional dependencies (add as needed based on your project)
+# These are commonly used in Flask applications
+python-dotenv>=1.0.0  # For environment variable management (optional but recommended)
+

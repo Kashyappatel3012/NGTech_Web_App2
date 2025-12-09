@@ -1,0 +1,9 @@
+Database already exists - keeping existing data
+Starting fingerprint update...
+Found HR Manager: hr_user (ID: 5)
+Old fingerprint: 6fc7c55b2ee9afd4dd8e9454b3a93ca6
+Setting new fingerprint: 6fc7c55b2ee9afd4dd8e9454b3a93ca6
+Committed to database
+Stored fingerprint: 6fc7c55b2ee9afd4dd8e9454b3a93ca6
+Match: True
+Done!

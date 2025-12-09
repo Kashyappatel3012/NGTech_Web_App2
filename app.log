@@ -1,0 +1,92 @@
+2025-12-09 16:51:57,228 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-09 16:51:57,228 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-09 16:52:15,967 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:15] "[32mGET / HTTP/1.1[0m" 302 -
+2025-12-09 16:52:16,106 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:16] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:20,030 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:20] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:40,549 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:40] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:40,818 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:40] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:42,767 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:42] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:45,130 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:45] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:45,388 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:45] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:48,137 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:48] "[32mGET / HTTP/1.1[0m" 302 -
+2025-12-09 16:52:48,148 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:48] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:52,483 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:52] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:53,588 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:53] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-12-09 16:52:53,599 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:53] "[33mGET /login?next=/logout HTTP/1.1[0m" 404 -
+2025-12-09 16:52:54,239 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:54] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-12-09 16:52:54,273 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:54] "[33mGET /login?next=/logout HTTP/1.1[0m" 404 -
+2025-12-09 16:52:57,345 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:57] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:57,977 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:57] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:52:58,207 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:52:58] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:16,313 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:16] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:17,047 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:17] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:17,433 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:17] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:17,758 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:17] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:17,933 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:17] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:25,921 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-09 16:56:25,922 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-09 16:56:28,733 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:28] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:32,380 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:32] "[32mGET / HTTP/1.1[0m" 302 -
+2025-12-09 16:56:32,403 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:32] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:56:32,636 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:32] "[32mGET / HTTP/1.1[0m" 302 -
+2025-12-09 16:56:32,668 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:56:32] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:59:45,780 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:59:45] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:59:46,051 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:59:46] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:59:47,878 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:59:47] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:59:49,352 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:59:49] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:59:50,054 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:59:50] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 16:59:50,359 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 16:59:50] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:13,483 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:13] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:18,416 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-12-09 17:00:18,417 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-09 17:00:22,831 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:22] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:23,007 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:23] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:23,549 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:23] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:23,692 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:23] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:23,812 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:23] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:23,976 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:23] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:24,215 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:24] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:00:24,437 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:00:24] "[33mGET /login HTTP/1.1[0m" 404 -
+2025-12-09 17:01:51,075 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:01:51] "GET /login HTTP/1.1" 200 -
+2025-12-09 17:01:51,190 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:01:51] "[36mGET /static/css/login.css HTTP/1.1[0m" 304 -
+2025-12-09 17:01:51,197 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:01:51] "[36mGET /static/js/login.js HTTP/1.1[0m" 304 -
+2025-12-09 17:01:51,197 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:01:51] "[36mGET /static/Images/NGTech_Logo.png HTTP/1.1[0m" 304 -
+2025-12-09 17:01:52,025 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:01:52] "POST /validate_fingerprint HTTP/1.1" 200 -
+2025-12-09 17:01:52,119 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:01:52] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-09 17:02:13,580 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:13] "GET /login HTTP/1.1" 200 -
+2025-12-09 17:02:13,604 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:13] "[36mGET /static/css/login.css HTTP/1.1[0m" 304 -
+2025-12-09 17:02:13,607 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:13] "[36mGET /static/Images/NGTech_Logo.png HTTP/1.1[0m" 304 -
+2025-12-09 17:02:13,609 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:13] "[36mGET /static/js/login.js HTTP/1.1[0m" 304 -
+2025-12-09 17:02:14,154 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:14] "POST /validate_fingerprint HTTP/1.1" 200 -
+2025-12-09 17:02:22,248 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "[32mGET /audit_dashboard HTTP/1.1[0m" 302 -
+2025-12-09 17:02:22,272 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "GET /login?next=/audit_dashboard HTTP/1.1" 200 -
+2025-12-09 17:02:22,315 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "GET /static/css/login.css HTTP/1.1" 200 -
+2025-12-09 17:02:22,317 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "[36mGET /static/Images/NGTech_Logo.png HTTP/1.1[0m" 304 -
+2025-12-09 17:02:22,319 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "GET /static/js/login.js HTTP/1.1" 200 -
+2025-12-09 17:02:22,524 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "[33mPOST /validate_fingerprint HTTP/1.1[0m" 404 -
+2025-12-09 17:02:22,565 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "[33mGET /nonexistent_route_404 HTTP/1.1[0m" 404 -
+2025-12-09 17:02:22,569 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:02:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-09 17:03:09,517 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:09] "GET /login HTTP/1.1" 200 -
+2025-12-09 17:03:09,565 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:09] "[36mGET /static/Images/NGTech_Logo.png HTTP/1.1[0m" 304 -
+2025-12-09 17:03:09,567 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:09] "[36mGET /static/js/login.js HTTP/1.1[0m" 304 -
+2025-12-09 17:03:09,569 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:09] "[36mGET /static/css/login.css HTTP/1.1[0m" 304 -
+2025-12-09 17:03:10,104 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:10] "POST /validate_fingerprint HTTP/1.1" 200 -
+2025-12-09 17:03:15,889 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:15] "[32mGET /audit_dashboard HTTP/1.1[0m" 302 -
+2025-12-09 17:03:15,921 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:15] "GET /login?next=/audit_dashboard HTTP/1.1" 200 -
+2025-12-09 17:03:15,949 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:15] "[36mGET /static/css/login.css HTTP/1.1[0m" 304 -
+2025-12-09 17:03:15,949 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:15] "[36mGET /static/Images/NGTech_Logo.png HTTP/1.1[0m" 304 -
+2025-12-09 17:03:15,956 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:15] "[36mGET /static/js/login.js HTTP/1.1[0m" 304 -
+2025-12-09 17:03:16,133 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:16] "[33mPOST /validate_fingerprint HTTP/1.1[0m" 404 -
+2025-12-09 17:03:16,154 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:16] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-09 17:03:16,163 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:16] "[33mGET /nonexistent_route_404 HTTP/1.1[0m" 404 -
+2025-12-09 17:03:20,990 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:20] "[33mPOST /login HTTP/1.1[0m" 404 -
+2025-12-09 17:03:22,572 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:22] "GET /login HTTP/1.1" 200 -
+2025-12-09 17:03:22,667 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:22] "POST /validate_fingerprint HTTP/1.1" 200 -
+2025-12-09 17:03:33,492 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:33] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-12-09 17:03:33,503 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:33] "GET /verify_otp HTTP/1.1" 200 -
+2025-12-09 17:03:33,539 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:33] "[36mGET /static/css/verify_otp.css HTTP/1.1[0m" 304 -
+2025-12-09 17:03:33,547 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:33] "[36mGET /static/Images/NGTech_Logo.png HTTP/1.1[0m" 304 -
+2025-12-09 17:03:33,547 - werkzeug - INFO - 127.0.0.1 - - [09/Dec/2025 17:03:33] "GET /static/js/verify_otp.js HTTP/1.1" 200 -

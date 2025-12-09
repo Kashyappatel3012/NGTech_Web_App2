@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRC Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/grc_dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-clipboard-check"></i> GRC Dashboard</h2>
+                <p>Welcome, User</p>
+            </div>
+            <nav>
+                <a href="#employee-section" class="active"><i class="fas fa-users"></i> Employee Details</a>
+                <a href="#reporting-section"><i class="fas fa-file-alt"></i> Reporting</a>
+                <a href="#chat-section"><i class="fas fa-comments"></i> AI Chat Board</a>
+                <a href="#work-section"><i class="fas fa-tasks"></i> Update Your Work</a>
+                <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </div>
+
+        
+        <div class="main-content">
+            <!-- Update the employee details section -->
+<section id="employee-section" class="dashboard-section">
+    <h1><i class="fas fa-users"></i> Employee Details</h1>
+    <div class="employee-container">
+        <div class="employee-card">
+            <div class="employee-info">
+    <img src="{{ url_for('static', filename='uploads/' + employee_data.photo) if employee_data and employee_data.photo else url_for('static', filename='images/default_avatar.jpg') }}" alt="Employee Photo" class="employee-img">
+    <div class="employee-details">
+        <h3>{{ current_user.employee_name }}</h3>
+        <p><i class="fas fa-briefcase"></i> {{ employee_data.position if employee_data else 'Position not set' }}</p>
+        <p><i class="fas fa-building"></i> {{ current_user.department }} Department</p>
+        <p><i class="fas fa-clock"></i> {{ employee_data.experience if employee_data else 'Experience not set' }}</p>
+    </div>
+</div>
+<div class="employee-additional-info">
+    <div class="info-row">
+        <span><i class="fas fa-graduation-cap"></i> <strong>Education:</strong> {{ employee_data.education if employee_data else 'Not set' }}</span>
+    </div>
+    <div class="info-row">
+        <span><i class="fas fa-certificate"></i> <strong>Certification:</strong> {{ employee_data.certifications if employee_data else 'Not set' }}</span>
+    </div>
+    <div class="info-row">
+        <span><i class="fas fa-birthday-cake"></i> <strong>DOB:</strong> {{ employee_data.date_of_birth.strftime('%d/%m/%Y') if employee_data and employee_data.date_of_birth else 'Not set' }}</span>
+    </div>
+    <div class="info-row">
+        <span><i class="fas fa-tint"></i> <strong>Blood Group:</strong> {{ employee_data.blood_group if employee_data else 'Not set' }}</span>
+    </div>
+    <div class="info-row">
+        <span><i class="fas fa-envelope"></i> <strong>Email:</strong> {{ current_user.email }}</span>
+    </div>
+    <div class="info-row">
+        <span><i class="fas fa-phone"></i> <strong>Contact:</strong> {{ employee_data.contact_number if employee_data else 'Not set' }}</span>
+    </div>
+</div>
+        </div>
+
+<div class="progress-chart">
+    <span class="chart-title">Previous Month Performance</span>
+    <canvas id="progressChart" style="max-width: 500px; max-height: 220px; width:100%; height:260px;"></canvas>
+    <span class="chart-title" style="margin-top: 2rem;">Last Year Performance</span>
+    <canvas id="lastYearChart" style="max-width: 500px; max-height: 220px; width:100%; height:260px;"></canvas>
+</div>
+
+    </div>
+</section>
+            <section id="reporting-section" class="dashboard-section">
+                <h1><i class="fas fa-file-alt"></i> Reporting Section</h1>
+                <div class="report-accordion">
+                    <div class="accordion-item">
+                        <button class="accordion-btn">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Compliance Certificate</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <button class="report-option" onclick="openModal('grcComplianceExcelModal')"><i class="fas fa-file-excel"></i> Compliance Worksheet</button>
+                            <button class="report-option" onclick="openModal('grcComplianceCertificateModal')"><i class="fas fa-certificate"></i> Compliance Certificate</button>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-btn">
+                            <i class="fas fa-file-contract"></i>
+                            <span>Compilation Certificate</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <button class="report-option" onclick="openModal('grcInfraVAPTCompilationCertModal')"><i class="fas fa-certificate"></i> Infrastructure VAPT Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcWebsiteVAPTCompilationCertModal')"><i class="fas fa-certificate"></i> Website VAPT Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcPublicIPVAPTCompilationCertModal')"><i class="fas fa-certificate"></i> Public IP VAPT Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcWebAppVAPTCompilationCertModal')"><i class="fas fa-certificate"></i> Web Application VAPT Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcAndroidVAPTCompilationCertModal')"><i class="fas fa-certificate"></i> Android Mobile Application VAPT Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcIOSVAPTCompilationCertModal')"><i class="fas fa-certificate"></i> IOS Mobile Application VAPT Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcISAuditCompilationCertModal')"><i class="fas fa-certificate"></i> IS Audit Compilation Certificate</button>
+                            <button class="report-option" onclick="openModal('grcCyberSecurityCompilationCertModal')"><i class="fas fa-certificate"></i> Cybersecurity Audit Compilation Certificate</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chat-section" class="dashboard-section">
+                <h1><i class="fas fa-comments"></i> AI Chat Board</h1>
+                <div class="chat-container">
+                    <div class="chat-messages">
+                        <div class="message ai-message">
+                            <p>Hello! How can I assist you with your GRC tasks today?</p>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <select id="prompt-select">
+                            <option value="">Select a prompt...</option>
+                            <option value="correct-grammar">Correct grammar in this text</option>
+                            <option value="professional-email">Write a professional email</option>
+                            <option value="audit-checklist">Generate audit checklist</option>
+                            <option value="risk-assessment">Help with risk assessment</option>
+                            <option value="compliance-query">Compliance query</option>
+                            <option value="report-template">Need report template</option>
+                            <option value="data-analysis">Help with data analysis</option>
+                            <option value="presentation-tips">Presentation tips</option>
+                            <option value="meeting-agenda">Create meeting agenda</option>
+                            <option value="time-management">Time management tips</option>
+                        </select>
+                        <input type="text" placeholder="Type your message...">
+                        <button><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="work-section" class="dashboard-section">
+                <h1><i class="fas fa-tasks"></i> Update Your Work</h1>
+                <div class="work-cards" style="display: flex; flex-direction: column; align-items: center; gap: 40px;">
+                    <!-- First Row: 4 cards -->
+                    <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; width: 100%;">
+                        <div class="work-card" id="workPlanCard" onclick="openWorkPlanModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-calendar-plus"></i>
+                            <h3>Submit Today's Work Plan</h3>
+                        </div>
+                        <div class="work-card" id="updateWorkCard" onclick="openUpdateWorkModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-edit"></i>
+                            <h3>Update Today's Work</h3>
+                        </div>
+                        <div class="work-card" id="sprintPlanCard" onclick="openSprintPlanModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-calendar-week"></i>
+                            <h3>Submit Sprint Plan</h3>
+                        </div>
+                        <div class="work-card" id="lastWeekSprintCard" onclick="openLastWeekSprintModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-calendar-check"></i>
+                            <h3>Submit Last Week Sprint</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Second Row: 3 cards -->
+                    <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; width: 100%;">
+                        <div class="work-card" id="extraWorkCard" onclick="openExtraWorkModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-plus-circle"></i>
+                            <h3>Extra Work</h3>
+                        </div>
+                        <div class="work-card" id="leaveApprovalCard" onclick="openLeaveApprovalModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-umbrella-beach"></i>
+                            <h3>Leave Approval Request</h3>
+                        </div>
+                        <div class="work-card" id="complaintCard" onclick="openComplaintModal()" style="cursor: pointer; width: 180px; height: 180px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Complaint About Team</h3>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Work Plan Modal -->
+    <div id="workPlanModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Submit Today's Work Plan</h3>
+                <span class="close-modal" onclick="closeWorkPlanModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="workPlanForm" onsubmit="handleWorkPlanSubmit(event)">
+                    <!-- Hidden field for status check -->
+                    <input type="hidden" id="workPlanEmployeeNameForCheck" value="{{ user.employee_name if user else '' }}">
+                    
+                    <!-- Read-only fields -->
+                    <div class="form-group">
+                        <label for="workPlanDate">Date</label>
+                        <input type="date" id="workPlanDate" name="date" readonly style="background-color: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="workPlanEmployeeName">Employee Name</label>
+                        <input type="text" id="workPlanEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="workPlanEmployeeTeam">Employee Team</label>
+                        <input type="text" id="workPlanEmployeeTeam" name="employeeTeam" readonly style="background-color: #f5f5f5;" value="{{ user.department if user else '' }}">
+                    </div>
+
+                    <!-- Task Section -->
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <div class="form-group">
+                        <h3 style="margin-bottom: 15px;">Task Details</h3>
+                        
+                        <div id="workPlanTaskContainer">
+                            <div class="task-entry" data-task-index="0">
+                                <div class="form-group">
+                                    <label for="workPlanTask_0">Task*</label>
+                                    <input type="text" id="workPlanTask_0" name="task[]" placeholder="Enter task name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="workPlanTaskDescription_0">Task Description*</label>
+                                    <textarea id="workPlanTaskDescription_0" name="taskDescription[]" rows="2" placeholder="Enter task description" required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="workPlanClientName_0">Client Name*</label>
+                                    <input type="text" id="workPlanClientName_0" name="clientName[]" placeholder="Enter client name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="workPlanTime_0">Time Taken (in Hours)*</label>
+                                    <input type="number" id="workPlanTime_0" name="time[]" step="0.01" min="0" placeholder="e.g., 1.25, 2.5" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="add-member-btn" id="addWorkPlanTaskBtn" style="margin-top: 15px;">+ Add New Task</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeWorkPlanModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Work Modal -->
+    <div id="updateWorkModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Update Today's Work</h3>
+                <span class="close-modal" onclick="closeUpdateWorkModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="updateWorkForm" onsubmit="handleUpdateWorkSubmit(event)">
+                    <!-- Hidden field for status check -->
+                    <input type="hidden" id="updateWorkEmployeeNameForCheck" value="{{ user.employee_name if user else '' }}">
+                    
+                    <!-- Read-only fields -->
+                    <div class="form-group">
+                        <label for="updateWorkDate">Date</label>
+                        <input type="date" id="updateWorkDate" name="date" readonly style="background-color: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="updateWorkEmployeeName">Employee Name</label>
+                        <input type="text" id="updateWorkEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="updateWorkEmployeeTeam">Employee Team</label>
+                        <input type="text" id="updateWorkEmployeeTeam" name="employeeTeam" readonly style="background-color: #f5f5f5;" value="{{ user.department if user else '' }}">
+                    </div>
+
+                    <!-- Task Section -->
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <div class="form-group">
+                        <h3 style="margin-bottom: 15px;">Task Details</h3>
+                        
+                        <div id="updateWorkTaskContainer">
+                            <div class="task-entry" data-task-index="0">
+                                <div class="form-group">
+                                    <label for="updateWorkTask_0">Task*</label>
+                                    <input type="text" id="updateWorkTask_0" name="task[]" placeholder="Enter task name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="updateWorkClientName_0">Client Name*</label>
+                                    <input type="text" id="updateWorkClientName_0" name="clientName[]" placeholder="Enter client name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="updateWorkTime_0">Time Taken (in Hours)*</label>
+                                    <input type="number" id="updateWorkTime_0" name="time[]" step="0.01" min="0" placeholder="e.g., 1.25, 2.5" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="updateWorkStatus_0">Status*</label>
+                                    <select id="updateWorkStatus_0" name="status[]" required>
+                                        <option value="">Select Status</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Remove">Remove</option>
+                                        <option value="Take over">Take over</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="updateWorkDescription_0">Description*</label>
+                                    <textarea id="updateWorkDescription_0" name="description[]" rows="2" placeholder="Enter description" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="add-member-btn" id="addUpdateWorkTaskBtn" style="margin-top: 15px;">+ Add New Task</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeUpdateWorkModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sprint Plan Modal -->
+    <div id="sprintPlanModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Submit Sprint Plan</h3>
+                <span class="close-modal" onclick="closeSprintPlanModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="sprintPlanForm" onsubmit="handleSprintPlanSubmit(event)">
+                    <!-- Hidden field for status check -->
+                    <input type="hidden" id="sprintPlanEmployeeNameForCheck" value="{{ user.employee_name if user else '' }}">
+                    
+                    <!-- Read-only fields -->
+                    <div class="form-group">
+                        <label for="sprintPlanEmployeeName">Employee Name</label>
+                        <input type="text" id="sprintPlanEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sprintPlanEmployeeTeam">Employee Team</label>
+                        <input type="text" id="sprintPlanEmployeeTeam" name="employeeTeam" readonly style="background-color: #f5f5f5;" value="{{ user.department if user else '' }}">
+                    </div>
+
+                    <!-- Day Section -->
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <div class="form-group">
+                        <h3 style="margin-bottom: 15px;">Sprint Plan for Next 6 Days</h3>
+                        
+                        <div id="sprintPlanDayContainer">
+                            <div class="day-entry" data-day-index="0">
+                                <div class="form-group">
+                                    <label>Date*</label>
+                                    <input type="date" class="sprint-date-input" name="dates[]" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <h4 style="margin-bottom: 10px;">Tasks</h4>
+                                    <div id="sprintDay0TaskContainer" class="task-container">
+                                        <div class="task-entry" data-task-index="0">
+                                            <div class="form-group">
+                                                <label>Task*</label>
+                                                <input type="text" name="tasks[0][]" placeholder="Enter task" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Client Name*</label>
+                                                <input type="text" name="clientNames[0][]" placeholder="Enter client name" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Time (Hours)*</label>
+                                                <input type="number" name="times[0][]" step="0.01" min="0" placeholder="e.g., 1.25" required>
+                                            </div>
+                                            <button type="button" onclick="removeSprintTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">Remove</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="add-member-btn add-sprint-task-btn" data-day="0" style="margin-top: 10px;">+ Add New Task</button>
+                                </div>
+                                
+                                <button type="button" onclick="removeSprintDay(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 10px; margin-top: 15px; cursor: pointer; width: 100%;">Remove This Day</button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="add-member-btn" id="addSprintDayBtn" style="margin-top: 15px;">+ Add New Day</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeSprintPlanModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Last Week Sprint Modal -->
+    <div id="lastWeekSprintModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Submit Last Week Sprint</h3>
+                <span class="close-modal" onclick="closeLastWeekSprintModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="lastWeekSprintForm" onsubmit="handleLastWeekSprintSubmit(event)">
+                    <!-- Hidden field for status check -->
+                    <input type="hidden" id="lastWeekSprintEmployeeNameForCheck" value="{{ user.employee_name if user else '' }}">
+                    
+                    <!-- Read-only fields -->
+                    <div class="form-group">
+                        <label for="lastWeekSprintEmployeeName">Employee Name</label>
+                        <input type="text" id="lastWeekSprintEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastWeekSprintEmployeeTeam">Employee Team</label>
+                        <input type="text" id="lastWeekSprintEmployeeTeam" name="employeeTeam" readonly style="background-color: #f5f5f5;" value="{{ user.department if user else '' }}">
+                    </div>
+
+                    <!-- Special Comment Field -->
+                    <div class="form-group">
+                        <label for="lastWeekSprintSpecialComment">Special Comment or Extra Comment</label>
+                        <textarea id="lastWeekSprintSpecialComment" name="specialComment" rows="3" placeholder="Enter any specific comment or extra information"></textarea>
+                    </div>
+
+                    <!-- Day Section -->
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <div class="form-group">
+                        <h3 style="margin-bottom: 15px;">Last Week Sprint Work</h3>
+                        
+                        <div id="lastWeekSprintDayContainer">
+                            <div class="day-entry" data-day-index="0">
+                                <div class="form-group">
+                                    <label>Date*</label>
+                                    <input type="date" class="sprint-date-input" name="dates[]" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <h4 style="margin-bottom: 10px;">Tasks</h4>
+                                    <div id="lastWeekSprintDay0TaskContainer" class="task-container">
+                                        <div class="task-entry" data-task-index="0">
+                                            <div class="form-group">
+                                                <label>Task*</label>
+                                                <input type="text" name="tasks[0][]" placeholder="Enter task" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Client Name*</label>
+                                                <input type="text" name="clientNames[0][]" placeholder="Enter client name" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Time (Hours)*</label>
+                                                <input type="number" name="times[0][]" step="0.01" min="0" placeholder="e.g., 1.25" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Status*</label>
+                                                <select name="statuses[0][]" required>
+                                                    <option value="">Select Status</option>
+                                                    <option value="Completed">Completed</option>
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Remove">Remove</option>
+                                                    <option value="Take over">Take over</option>
+                                                </select>
+                                            </div>
+                                            <button type="button" onclick="removeLastWeekSprintTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">Remove</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="add-member-btn add-lastweek-task-btn" data-day="0" style="margin-top: 10px;">+ Add New Task</button>
+                                </div>
+                                
+                                <button type="button" onclick="removeLastWeekSprintDay(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 10px; margin-top: 15px; cursor: pointer; width: 100%;">Remove This Day</button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="add-member-btn" id="addLastWeekSprintDayBtn" style="margin-top: 15px;">+ Add New Day</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeLastWeekSprintModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extra Work Modal -->
+    <div id="extraWorkModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Submit Extra Work</h3>
+                <span class="close-modal" onclick="closeExtraWorkModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="extraWorkForm" onsubmit="handleExtraWorkSubmit(event)">
+                    <!-- Read-only fields -->
+                    <div class="form-group">
+                        <label for="extraWorkEmployeeName">Employee Name</label>
+                        <input type="text" id="extraWorkEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkEmployeeTeam">Employee Team</label>
+                        <input type="text" id="extraWorkEmployeeTeam" name="employeeTeam" readonly style="background-color: #f5f5f5;" value="{{ user.department if user else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkDate">Date</label>
+                        <input type="date" id="extraWorkDate" name="date" readonly style="background-color: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkTime">Time (Hours)*</label>
+                        <input type="number" id="extraWorkTime" name="time" step="0.01" min="0" placeholder="e.g., 1.25, 2.5" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkTask">Task*</label>
+                        <input type="text" id="extraWorkTask" name="task" placeholder="Enter task" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkTaskDescription">Task Description*</label>
+                        <textarea id="extraWorkTaskDescription" name="taskDescription" rows="3" placeholder="Enter task description" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkClient">Client Name*</label>
+                        <input type="text" id="extraWorkClient" name="clientName" placeholder="Enter client name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extraWorkConcernedPerson">Concerned Person*</label>
+                        <input type="text" id="extraWorkConcernedPerson" name="concernedPerson" placeholder="Enter concerned person name" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeExtraWorkModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Approval Request Modal -->
+    <div id="leaveApprovalModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Leave Approval Request</h3>
+                <span class="close-modal" onclick="closeLeaveApprovalModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="leaveApprovalForm">
+                    <!-- Employee Name (Default) -->
+                    <div class="form-group">
+                        <label for="leaveEmployeeName">Employee Name</label>
+                        <input type="text" id="leaveEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <!-- Date (Today's Date by Default) -->
+                    <div class="form-group">
+                        <label for="leaveRequestDate">Date</label>
+                        <input type="date" id="leaveRequestDate" name="requestDate" readonly style="background-color: #f5f5f5;">
+                    </div>
+
+                    <!-- Leave Type Radio Buttons -->
+                    <div class="form-group">
+                        <label>Leave Type*</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="leaveType" value="Preplan Leave" checked onchange="toggleCurrentTaskField()"> Preplan Leave</label>
+                            <label><input type="radio" name="leaveType" value="Emergency Leave" onchange="toggleCurrentTaskField()"> Emergency Leave</label>
+                        </div>
+                    </div>
+
+                    <!-- Leave From -->
+                    <div class="form-group">
+                        <label for="leaveFrom">Leave From*</label>
+                        <input type="date" id="leaveFrom" name="leaveFrom" required>
+                    </div>
+
+                    <!-- Leave To -->
+                    <div class="form-group">
+                        <label for="leaveTo">Leave To*</label>
+                        <input type="date" id="leaveTo" name="leaveTo" required>
+                    </div>
+
+                    <!-- Reason -->
+                    <div class="form-group">
+                        <label for="leaveReason">Reason*</label>
+                        <input type="text" id="leaveReason" name="reason" placeholder="Enter reason for leave" required>
+                    </div>
+
+                    <!-- Your current task (Only shown if Emergency Leave is selected) -->
+                    <div class="form-group" id="currentTaskField" style="display: none;">
+                        <label for="leaveCurrentTask">Your Current Task*</label>
+                        <textarea id="leaveCurrentTask" name="currentTask" rows="3" placeholder="Enter your current task details"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeLeaveApprovalModal()">Cancel</button>
+                        <button type="button" class="submit-btn" onclick="handleLeaveApprovalSubmit()">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaint About Team Modal -->
+    <div id="complaintModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Complaint About Team</h3>
+                <span class="close-modal" onclick="closeComplaintModal()">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="complaintForm">
+                    <!-- Employee Name (Default) -->
+                    <div class="form-group">
+                        <label for="complaintEmployeeName">Employee Name</label>
+                        <input type="text" id="complaintEmployeeName" name="employeeName" readonly style="background-color: #f5f5f5;" value="{{ user.employee_name if user else '' }}">
+                    </div>
+
+                    <!-- Employee Team (Default) -->
+                    <div class="form-group">
+                        <label for="complaintEmployeeTeam">Employee Team</label>
+                        <input type="text" id="complaintEmployeeTeam" name="employeeTeam" readonly style="background-color: #f5f5f5;" value="{{ user.department if user else '' }}">
+                    </div>
+
+                    <!-- Date (Current date by default) -->
+                    <div class="form-group">
+                        <label for="complaintDate">Date</label>
+                        <input type="date" id="complaintDate" name="date" readonly style="background-color: #f5f5f5;">
+                    </div>
+
+                    <!-- Person Name -->
+                    <div class="form-group">
+                        <label for="complaintPersonName">Person Name*</label>
+                        <input type="text" id="complaintPersonName" name="personName" placeholder="Enter person name" required>
+                    </div>
+
+                    <!-- Complain Description -->
+                    <div class="form-group">
+                        <label for="complaintDescription">Complain Description*</label>
+                        <textarea id="complaintDescription" name="complainDescription" rows="4" placeholder="Enter complaint details" required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeComplaintModal()">Cancel</button>
+                        <button type="button" class="submit-btn" onclick="handleComplaintSubmit()">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Compliance Worksheet Selection Modal -->
+    <div id="grcComplianceExcelModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Select Compliance Worksheet Type</h3>
+                <span class="close-modal" onclick="closeModal('grcComplianceExcelModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <button class="report-option" onclick="closeModal('grcComplianceExcelModal'); openModal('grcIsAuditComplianceModal')">
+                        <i class="fas fa-file-excel"></i> IS Audit Compliance Worksheet
+                    </button>
+                    <button class="report-option" onclick="closeModal('grcComplianceExcelModal'); openModal('grcInfraVAPTComplianceModal')">
+                        <i class="fas fa-file-excel"></i> Infrastructure VAPT Compliance Worksheet
+                    </button>
+                    <button class="report-option" onclick="closeModal('grcComplianceExcelModal'); openModal('grcWebsiteVAPTComplianceModal')">
+                        <i class="fas fa-file-excel"></i> Website VAPT Compliance Worksheet
+                    </button>
+                    <button class="report-option" onclick="closeModal('grcComplianceExcelModal'); openModal('grcPublicIPVAPTComplianceModal')">
+                        <i class="fas fa-file-excel"></i> Public IP VAPT Compliance Worksheet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC IS Audit Compliance Worksheet Modal -->
+    <div id="grcIsAuditComplianceModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>IS Audit Compliance Worksheet</h3>
+                <span class="close-modal" onclick="closeModal('grcIsAuditComplianceModal')">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="grcIsAuditComplianceForm" method="POST" enctype="multipart/form-data" onsubmit="handleGrcIsAuditComplianceSubmit(event)">
+                    
+                    <!-- Organization Name -->
+                    <div class="form-group">
+                        <label for="grcIsAuditOrgName" class="form-label">Organization Name*</label>
+                        <select id="grcIsAuditOrgName" name="organizationName" class="form-input" required onchange="toggleGrcOtherField('grcIsAuditOrgName', 'grcIsAuditOrgNameOther')">
+                            <option value="">Select Organization</option>
+                            <option value="State Bank of India">State Bank of India</option>
+                            <option value="HDFC Bank">HDFC Bank</option>
+                            <option value="ICICI Bank">ICICI Bank</option>
+                            <option value="Punjab National Bank">Punjab National Bank</option>
+                            <option value="Bank of Baroda">Bank of Baroda</option>
+                            <option value="Canara Bank">Canara Bank</option>
+                            <option value="Union Bank of India">Union Bank of India</option>
+                            <option value="Bank of India">Bank of India</option>
+                            <option value="Indian Bank">Indian Bank</option>
+                            <option value="Central Bank of India">Central Bank of India</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                        <input type="text" id="grcIsAuditOrgNameOther" name="organizationNameOther" class="form-input" placeholder="Specify organization name" style="display: none; margin-top: 10px;">
+                    </div>
+
+                    <!-- Report ID -->
+                    <div class="form-group">
+                        <label for="grcIsAuditReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcIsAuditReportId" name="reportId" class="form-input" placeholder="Enter Report ID" required>
+                    </div>
+
+                    <!-- Report Date -->
+                    <div class="form-group">
+                        <label for="grcIsAuditReportDate" class="form-label">Report Date*</label>
+                        <input type="date" id="grcIsAuditReportDate" name="reportDate" class="form-input" required>
+                    </div>
+
+                    <!-- Compliance Date -->
+                    <div class="form-group">
+                        <label for="grcIsAuditComplianceDate" class="form-label">Compliance Date*</label>
+                        <input type="date" id="grcIsAuditComplianceDate" name="complianceDate" class="form-input" required>
+                    </div>
+
+                    <!-- Excel File 1 (Source Data) -->
+                    <div class="form-group">
+                        <label for="grcIsAuditExcelFile1" class="form-label">Upload Excel File (Source Data)*</label>
+                        <input type="file" id="grcIsAuditExcelFile1" name="excelFile1" class="form-input" accept=".xlsx,.xls" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Upload the Excel file containing asset review data</small>
+                    </div>
+
+                    <!-- Excel File 2 (Additional Evidence) -->
+                    <div class="form-group">
+                        <label for="grcIsAuditExcelFile2" class="form-label">Upload Excel File (Evidence)*</label>
+                        <input type="file" id="grcIsAuditExcelFile2" name="excelFile2" class="form-input" accept=".xlsx,.xls" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Upload the Excel file containing evidence data</small>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcIsAuditComplianceModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcIsAuditComplianceSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Infrastructure VAPT Compliance Worksheet Modal -->
+    <div id="grcInfraVAPTComplianceModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Infrastructure VAPT Compliance Worksheet</h3>
+                <span class="close-modal" onclick="closeModal('grcInfraVAPTComplianceModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="grcInfraVAPTComplianceForm" enctype="multipart/form-data" onsubmit="handleGrcInfraVAPTComplianceSubmit(event)">
+                    <!-- Organization Name -->
+                    <div class="form-group">
+                        <label for="grcInfraVAPTOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcInfraVAPTOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcInfraVAPTOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+
+                    <!-- Other Organization Name (Hidden by default) -->
+                    <div class="form-group" id="grcInfraVAPTOtherOrganizationGroup" style="display: none;">
+                        <label for="grcInfraVAPTOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcInfraVAPTOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+
+                    <!-- Report ID -->
+                    <div class="form-group">
+                        <label for="grcInfraVAPTReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcInfraVAPTReportId" name="reportId" class="form-input" required placeholder="Enter Report ID">
+                    </div>
+
+                    <!-- Report Date -->
+                    <div class="form-group">
+                        <label for="grcInfraVAPTReportDate" class="form-label">Report Date*</label>
+                        <input type="date" id="grcInfraVAPTReportDate" name="reportDate" class="form-input" required>
+                    </div>
+
+                    <!-- Compliance Date -->
+                    <div class="form-group">
+                        <label for="grcInfraVAPTComplianceDate" class="form-label">Compliance Date*</label>
+                        <input type="date" id="grcInfraVAPTComplianceDate" name="complianceDate" class="form-input" required>
+                    </div>
+
+                    <!-- Excel File -->
+                    <div class="form-group">
+                        <label for="grcInfraVAPTExcelFile" class="form-label">Upload Excel File*</label>
+                        <input type="file" id="grcInfraVAPTExcelFile" name="excelFile" class="form-input" accept=".xlsx,.xls" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Upload the Excel file containing Infrastructure VAPT data</small>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcInfraVAPTComplianceModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcInfraVAPTComplianceSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Website VAPT Compliance Worksheet Modal -->
+    <div id="grcWebsiteVAPTComplianceModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Website VAPT Compliance Worksheet</h3>
+                <span class="close-modal" onclick="closeModal('grcWebsiteVAPTComplianceModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="grcWebsiteVAPTComplianceForm" enctype="multipart/form-data" onsubmit="handleGrcWebsiteVAPTComplianceSubmit(event)">
+                    <!-- Organization Name -->
+                    <div class="form-group">
+                        <label for="grcWebsiteVAPTOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcWebsiteVAPTOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcWebsiteVAPTOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+
+                    <!-- Other Organization Name (Hidden by default) -->
+                    <div class="form-group" id="grcWebsiteVAPTOtherOrganizationGroup" style="display: none;">
+                        <label for="grcWebsiteVAPTOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcWebsiteVAPTOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+
+                    <!-- Report ID -->
+                    <div class="form-group">
+                        <label for="grcWebsiteVAPTReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcWebsiteVAPTReportId" name="reportId" class="form-input" required placeholder="Enter Report ID">
+                    </div>
+
+                    <!-- Report Date -->
+                    <div class="form-group">
+                        <label for="grcWebsiteVAPTReportDate" class="form-label">Report Date*</label>
+                        <input type="date" id="grcWebsiteVAPTReportDate" name="reportDate" class="form-input" required>
+                    </div>
+
+                    <!-- Compliance Date -->
+                    <div class="form-group">
+                        <label for="grcWebsiteVAPTComplianceDate" class="form-label">Compliance Date*</label>
+                        <input type="date" id="grcWebsiteVAPTComplianceDate" name="complianceDate" class="form-input" required>
+                    </div>
+
+                    <!-- Excel File -->
+                    <div class="form-group">
+                        <label for="grcWebsiteVAPTExcelFile" class="form-label">Upload Excel File*</label>
+                        <input type="file" id="grcWebsiteVAPTExcelFile" name="excelFile" class="form-input" accept=".xlsx,.xls" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Upload the Excel file containing Website VAPT data</small>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcWebsiteVAPTComplianceModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcWebsiteVAPTComplianceSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Public IP VAPT Compliance Worksheet Modal -->
+    <div id="grcPublicIPVAPTComplianceModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Public IP VAPT Compliance Worksheet</h3>
+                <span class="close-modal" onclick="closeModal('grcPublicIPVAPTComplianceModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="grcPublicIPVAPTComplianceForm" enctype="multipart/form-data" onsubmit="handleGrcPublicIPVAPTComplianceSubmit(event)">
+                    <!-- Organization Name -->
+                    <div class="form-group">
+                        <label for="grcPublicIPVAPTOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcPublicIPVAPTOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcPublicIPVAPTOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+
+                    <!-- Other Organization Name (Hidden by default) -->
+                    <div class="form-group" id="grcPublicIPVAPTOtherOrganizationGroup" style="display: none;">
+                        <label for="grcPublicIPVAPTOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcPublicIPVAPTOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+
+                    <!-- Report ID -->
+                    <div class="form-group">
+                        <label for="grcPublicIPVAPTReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcPublicIPVAPTReportId" name="reportId" class="form-input" required placeholder="Enter Report ID">
+                    </div>
+
+                    <!-- Report Date -->
+                    <div class="form-group">
+                        <label for="grcPublicIPVAPTReportDate" class="form-label">Report Date*</label>
+                        <input type="date" id="grcPublicIPVAPTReportDate" name="reportDate" class="form-input" required>
+                    </div>
+
+                    <!-- Compliance Date -->
+                    <div class="form-group">
+                        <label for="grcPublicIPVAPTComplianceDate" class="form-label">Compliance Date*</label>
+                        <input type="date" id="grcPublicIPVAPTComplianceDate" name="complianceDate" class="form-input" required>
+                    </div>
+
+                    <!-- Excel File -->
+                    <div class="form-group">
+                        <label for="grcPublicIPVAPTExcelFile" class="form-label">Upload Excel File*</label>
+                        <input type="file" id="grcPublicIPVAPTExcelFile" name="excelFile" class="form-input" accept=".xlsx,.xls" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Upload the Excel file containing Public IP VAPT data</small>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcPublicIPVAPTComplianceModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcPublicIPVAPTComplianceSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Compliance Certificate Selection Modal -->
+    <div id="grcComplianceCertificateModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Select Compliance Certificate Type</h3>
+                <span class="close-modal" onclick="closeModal('grcComplianceCertificateModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <button class="report-option" onclick="closeModal('grcComplianceCertificateModal'); openModal('grcIsAuditComplianceCertModal')">
+                        <i class="fas fa-certificate"></i> IS Audit Compliance Certificate
+                    </button>
+                    <button class="report-option" onclick="closeModal('grcComplianceCertificateModal'); openModal('grcInfraVAPTComplianceCertModal')">
+                        <i class="fas fa-certificate"></i> Infrastructure VAPT Compliance Certificate
+                    </button>
+                    <button class="report-option" onclick="closeModal('grcComplianceCertificateModal'); openModal('grcWebsiteVAPTComplianceCertModal')">
+                        <i class="fas fa-certificate"></i> Website VAPT Compliance Certificate
+                    </button>
+                    <button class="report-option" onclick="closeModal('grcComplianceCertificateModal'); openModal('grcPublicIPVAPTComplianceCertModal')">
+                        <i class="fas fa-certificate"></i> Public IP VAPT Compliance Certificate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC IS Audit Compliance Certificate Modal -->
+    <div id="grcIsAuditComplianceCertModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>IS Audit Compliance Certificate</h3>
+                <span class="close-modal" onclick="closeModal('grcIsAuditComplianceCertModal')">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="grcIsAuditComplianceCertForm" enctype="multipart/form-data" onsubmit="handleGrcIsAuditComplianceCertSubmit(event)">
+                    <!-- Organization Name -->
+                    <div class="form-group">
+                        <label for="grcCertOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcCertOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcCertOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+
+                    <!-- Other Organization Name (Hidden by default) -->
+                    <div class="form-group" id="grcCertOtherOrganizationGroup" style="display: none;">
+                        <label for="grcCertOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcCertOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group">
+                        <label for="grcCertAddress" class="form-label">Address*</label>
+                        <textarea id="grcCertAddress" name="address" class="form-input" required rows="3" placeholder="Enter organization address"></textarea>
+                    </div>
+
+                    <!-- Designation -->
+                    <div class="form-group">
+                        <label for="grcCertDesignation" class="form-label">Designation*</label>
+                        <input type="text" id="grcCertDesignation" name="designation" class="form-input" required placeholder="Enter designation of the person submitting">
+                    </div>
+
+                    <!-- Financial Year -->
+                    <div class="form-group">
+                        <label for="grcCertFinancialYear" class="form-label">Financial Year*</label>
+                        <select id="grcCertFinancialYear" name="financialYear" class="form-input" required onchange="toggleGrcCertOtherFinancialYear()">
+                            <option value="">-- Select Financial Year --</option>
+                            <option value="2023-24">2023-2024</option>
+                            <option value="2024-25">2024-2025</option>
+                            <option value="2025-26">2025-2026</option>
+                            <option value="2026-27">2026-2027</option>
+                            <option value="2027-28">2027-2028</option>
+                            <option value="2028-29">2028-2029</option>
+                            <option value="2029-30">2029-2030</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+
+                    <!-- Other Financial Year (Hidden by default) -->
+                    <div class="form-group" id="grcCertOtherFinancialYearGroup" style="display: none;">
+                        <label for="grcCertFinancialYearOther" class="form-label">Specify Financial Year (YYYY-YY)*</label>
+                        <input type="text" id="grcCertFinancialYearOther" name="financialYearOther" class="form-input" placeholder="e.g., 2030-31">
+                    </div>
+
+                    <!-- Number of Branches -->
+                    <div class="form-group">
+                        <label for="grcCertBranchNumber" class="form-label">Number of Branches*</label>
+                        <input type="number" id="grcCertBranchNumber" name="branchNumber" class="form-input" required min="0" placeholder="Enter number of branches">
+                    </div>
+
+                    <!-- Report ID -->
+                    <div class="form-group">
+                        <label for="grcCertReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcCertReportId" name="reportId" class="form-input" required placeholder="Enter Report ID">
+                    </div>
+
+                    <!-- Report Date -->
+                    <div class="form-group">
+                        <label for="grcCertReportDate" class="form-label">Date of the Report*</label>
+                        <input type="date" id="grcCertReportDate" name="reportDate" class="form-input" required>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcIsAuditComplianceCertModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcIsAuditComplianceCertSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Infrastructure VAPT Compliance Certificate Modal -->
+    <div id="grcInfraVAPTComplianceCertModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Infrastructure VAPT Compliance Certificate</h3>
+                <span class="close-modal" onclick="closeModal('grcInfraVAPTComplianceCertModal')">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="grcInfraVAPTComplianceCertForm" enctype="multipart/form-data" onsubmit="handleGrcInfraVAPTComplianceCertSubmit(event)">
+                    <div class="form-group">
+                        <label for="grcInfraCertOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcInfraCertOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcInfraCertOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grcInfraCertOtherOrganizationGroup" style="display: none;">
+                        <label for="grcInfraCertOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcInfraCertOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcInfraCertAddress" class="form-label">Address*</label>
+                        <textarea id="grcInfraCertAddress" name="address" class="form-input" required rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcInfraCertDesignation" class="form-label">Designation*</label>
+                        <input type="text" id="grcInfraCertDesignation" name="designation" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcInfraCertFinancialYear" class="form-label">Financial Year*</label>
+                        <select id="grcInfraCertFinancialYear" name="financialYear" class="form-input" required onchange="toggleGrcInfraCertOtherFinancialYear()">
+                            <option value="">-- Select Financial Year --</option>
+                            <option value="2023-24">2023-2024</option>
+                            <option value="2024-25">2024-2025</option>
+                            <option value="2025-26">2025-2026</option>
+                            <option value="2026-27">2026-2027</option>
+                            <option value="2027-28">2027-2028</option>
+                            <option value="2028-29">2028-2029</option>
+                            <option value="2029-30">2029-2030</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grcInfraCertOtherFinancialYearGroup" style="display: none;">
+                        <label for="grcInfraCertFinancialYearOther" class="form-label">Specify Financial Year (YYYY-YY)*</label>
+                        <input type="text" id="grcInfraCertFinancialYearOther" name="financialYearOther" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcInfraCertBranchNumber" class="form-label">Number of Branches*</label>
+                        <input type="number" id="grcInfraCertBranchNumber" name="branchNumber" class="form-input" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcInfraCertReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcInfraCertReportId" name="reportId" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcInfraCertReportDate" class="form-label">Date of the Report*</label>
+                        <input type="date" id="grcInfraCertReportDate" name="reportDate" class="form-input" required>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcInfraVAPTComplianceCertModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcInfraVAPTComplianceCertSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Website VAPT Compliance Certificate Modal -->
+    <div id="grcWebsiteVAPTComplianceCertModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Website VAPT Compliance Certificate</h3>
+                <span class="close-modal" onclick="closeModal('grcWebsiteVAPTComplianceCertModal')">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="grcWebsiteVAPTComplianceCertForm" enctype="multipart/form-data" onsubmit="handleGrcWebsiteVAPTComplianceCertSubmit(event)">
+                    <div class="form-group">
+                        <label for="grcWebCertOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcWebCertOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcWebCertOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grcWebCertOtherOrganizationGroup" style="display: none;">
+                        <label for="grcWebCertOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcWebCertOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcWebCertAddress" class="form-label">Address*</label>
+                        <textarea id="grcWebCertAddress" name="address" class="form-input" required rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcWebCertDesignation" class="form-label">Designation*</label>
+                        <input type="text" id="grcWebCertDesignation" name="designation" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcWebCertFinancialYear" class="form-label">Financial Year*</label>
+                        <select id="grcWebCertFinancialYear" name="financialYear" class="form-input" required onchange="toggleGrcWebCertOtherFinancialYear()">
+                            <option value="">-- Select Financial Year --</option>
+                            <option value="2023-24">2023-2024</option>
+                            <option value="2024-25">2024-2025</option>
+                            <option value="2025-26">2025-2026</option>
+                            <option value="2026-27">2026-2027</option>
+                            <option value="2027-28">2027-2028</option>
+                            <option value="2028-29">2028-2029</option>
+                            <option value="2029-30">2029-2030</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grcWebCertOtherFinancialYearGroup" style="display: none;">
+                        <label for="grcWebCertFinancialYearOther" class="form-label">Specify Financial Year (YYYY-YY)*</label>
+                        <input type="text" id="grcWebCertFinancialYearOther" name="financialYearOther" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcWebCertReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcWebCertReportId" name="reportId" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcWebCertReportDate" class="form-label">Date of the Report*</label>
+                        <input type="date" id="grcWebCertReportDate" name="reportDate" class="form-input" required>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcWebsiteVAPTComplianceCertModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcWebsiteVAPTComplianceCertSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRC Public IP VAPT Compliance Certificate Modal -->
+    <div id="grcPublicIPVAPTComplianceCertModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Public IP VAPT Compliance Certificate</h3>
+                <span class="close-modal" onclick="closeModal('grcPublicIPVAPTComplianceCertModal')">&times;</span>
+            </div>
+            <div class="modal-body scrollable-content">
+                <form id="grcPublicIPVAPTComplianceCertForm" enctype="multipart/form-data" onsubmit="handleGrcPublicIPVAPTComplianceCertSubmit(event)">
+                    <div class="form-group">
+                        <label for="grcPubCertOrganizationName" class="form-label">Organization Name*</label>
+                        <select id="grcPubCertOrganizationName" name="organizationName" class="form-input" required onchange="toggleGrcPubCertOtherOrganization()">
+                            <option value="">-- Select Organization --</option>
+                            <option value="The Ahmedabad Mercantile Co-Operative Bank Ltd.">The Ahmedabad Mercantile Co-Operative Bank Ltd.</option>
+                            <option value="The Abhinav Sahakari Bank Ltd.">The Abhinav Sahakari Bank Ltd.</option>
+                            <option value="The Cosmos Co-Operative Bank Ltd.">The Cosmos Co-Operative Bank Ltd.</option>
+                            <option value="The Jalgaon Peoples Co-Op. Bank Ltd.">The Jalgaon Peoples Co-Op. Bank Ltd.</option>
+                            <option value="Tumkur Grain Merchants Co-Operative Bank Ltd.">Tumkur Grain Merchants Co-Operative Bank Ltd.</option>
+                            <option value="Textile Traders Co-Operative Bank Ltd.">Textile Traders Co-Operative Bank Ltd.</option>
+                            <option value="The Udaipur Urban Co-Op Bank Ltd.">The Udaipur Urban Co-Op Bank Ltd.</option>
+                            <option value="Shree Kadi Nagarik Sahakari Bank Ltd.">Shree Kadi Nagarik Sahakari Bank Ltd.</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grcPubCertOtherOrganizationGroup" style="display: none;">
+                        <label for="grcPubCertOrganizationNameOther" class="form-label">Specify Organization Name*</label>
+                        <input type="text" id="grcPubCertOrganizationNameOther" name="organizationNameOther" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcPubCertAddress" class="form-label">Address*</label>
+                        <textarea id="grcPubCertAddress" name="address" class="form-input" required rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcPubCertDesignation" class="form-label">Designation*</label>
+                        <input type="text" id="grcPubCertDesignation" name="designation" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcPubCertFinancialYear" class="form-label">Financial Year*</label>
+                        <select id="grcPubCertFinancialYear" name="financialYear" class="form-input" required onchange="toggleGrcPubCertOtherFinancialYear()">
+                            <option value="">-- Select Financial Year --</option>
+                            <option value="2023-24">2023-2024</option>
+                            <option value="2024-25">2024-2025</option>
+                            <option value="2025-26">2025-2026</option>
+                            <option value="2026-27">2026-2027</option>
+                            <option value="2027-28">2027-2028</option>
+                            <option value="2028-29">2028-2029</option>
+                            <option value="2029-30">2029-2030</option>
+                            <option value="Other">Other (Specify)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grcPubCertOtherFinancialYearGroup" style="display: none;">
+                        <label for="grcPubCertFinancialYearOther" class="form-label">Specify Financial Year (YYYY-YY)*</label>
+                        <input type="text" id="grcPubCertFinancialYearOther" name="financialYearOther" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="grcPubCertReportId" class="form-label">Report ID*</label>
+                        <input type="text" id="grcPubCertReportId" name="reportId" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grcPubCertReportDate" class="form-label">Date of the Report*</label>
+                        <input type="date" id="grcPubCertReportDate" name="reportDate" class="form-input" required>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('grcPublicIPVAPTComplianceCertModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="grcPublicIPVAPTComplianceCertSubmitBtn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    window.performanceData = {
+        punctuality: {% if performance_data %}{{ performance_data.punctuality|default(0) }}{% else %}0{% endif %},
+        clientSatisfaction: {% if performance_data %}{{ performance_data.client_satisfaction|default(0) }}{% else %}0{% endif %},
+        behaviour: {% if performance_data %}{{ performance_data.behaviour|default(0) }}{% else %}0{% endif %},
+        communicationSkills: {% if performance_data %}{{ performance_data.communication_skills|default(0) }}{% else %}0{% endif %},
+        technicalSkills: {% if performance_data %}{{ performance_data.technical_skills|default(0) }}{% else %}0{% endif %},
+        teamCoordination: {% if performance_data %}{{ performance_data.team_coordination|default(0) }}{% else %}0{% endif %}
+    };
+    </script>
+    <script>
+    window.performanceHistory = {% if performance_history %}{{ performance_history | tojson }}{% else %}[]{% endif %};
+    </script>
+    
+    <!-- Work Plan and Update Work JavaScript Functions -->
+    <script>
+    // Work Plan Modal Functions
+    function openWorkPlanModal() {
+        const workCard = document.getElementById('workPlanCard');
+        if (workCard && workCard.classList.contains('work-plan-submitted')) {
+            return;
+        }
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('workPlanDate').value = today;
+        document.getElementById('workPlanModal').style.display = 'block';
+    }
+    
+    function closeWorkPlanModal() {
+        document.getElementById('workPlanModal').style.display = 'none';
+        const form = document.getElementById('workPlanForm');
+        if (form) {
+            form.reset();
+            const taskContainer = document.getElementById('workPlanTaskContainer');
+            if (taskContainer) {
+                const firstTask = taskContainer.querySelector('.task-entry');
+                taskContainer.innerHTML = '';
+                if (firstTask) {
+                    taskContainer.appendChild(firstTask.cloneNode(true));
+                }
+            }
+        }
+    }
+    
+    function removeWorkPlanTask(button) {
+        const taskEntry = button.closest('.task-entry');
+        if (taskEntry) {
+            taskEntry.remove();
+        }
+    }
+    
+    function handleWorkPlanSubmit(event) {
+        event.preventDefault();
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        const formData = new FormData(event.target);
+        fetch('/submit_work_plan', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Work plan submitted successfully!');
+                closeWorkPlanModal();
+                const workCard = document.getElementById('workPlanCard');
+                if (workCard) {
+                    workCard.classList.add('work-plan-submitted');
+                    workCard.style.cursor = 'not-allowed';
+                    workCard.style.opacity = '0.6';
+                    workCard.onclick = null;
+                    const icon = workCard.querySelector('i');
+                    const heading = workCard.querySelector('h3');
+                    if (icon) icon.style.opacity = '0.5';
+                    if (heading) {
+                        heading.textContent = 'Work Plan Submitted Today';
+                        heading.style.color = '#888';
+                    }
+                }
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert(data.error || 'Failed to submit work plan');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during submission. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    }
+    
+    // Update Work Modal Functions
+    function openUpdateWorkModal() {
+        const workCard = document.getElementById('updateWorkCard');
+        if (workCard && workCard.classList.contains('update-work-submitted')) {
+            return;
+        }
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('updateWorkDate').value = today;
+        document.getElementById('updateWorkModal').style.display = 'block';
+    }
+    
+    function closeUpdateWorkModal() {
+        document.getElementById('updateWorkModal').style.display = 'none';
+        const form = document.getElementById('updateWorkForm');
+        if (form) {
+            form.reset();
+            const taskContainer = document.getElementById('updateWorkTaskContainer');
+            if (taskContainer) {
+                const firstTask = taskContainer.querySelector('.task-entry');
+                taskContainer.innerHTML = '';
+                if (firstTask) {
+                    taskContainer.appendChild(firstTask.cloneNode(true));
+                }
+            }
+        }
+    }
+    
+    function removeUpdateWorkTask(button) {
+        const taskEntry = button.closest('.task-entry');
+        if (taskEntry) {
+            taskEntry.remove();
+        }
+    }
+    
+    function handleUpdateWorkSubmit(event) {
+        event.preventDefault();
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        const formData = new FormData(event.target);
+        fetch('/submit_update_work', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Work updated successfully!');
+                closeUpdateWorkModal();
+                const workCard = document.getElementById('updateWorkCard');
+                if (workCard) {
+                    workCard.classList.add('update-work-submitted');
+                    workCard.style.cursor = 'not-allowed';
+                    workCard.style.opacity = '0.6';
+                    workCard.onclick = null;
+                    const icon = workCard.querySelector('i');
+                    const heading = workCard.querySelector('h3');
+                    if (icon) icon.style.opacity = '0.5';
+                    if (heading) {
+                        heading.textContent = 'Work Updated Today';
+                        heading.style.color = '#888';
+                    }
+                }
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert(data.error || 'Failed to update work');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    }
+    
+    // Sprint Plan Modal Functions
+    function openSprintPlanModal() {
+        const sprintCard = document.getElementById('sprintPlanCard');
+        if (sprintCard && sprintCard.classList.contains('sprint-plan-submitted')) {
+            return;
+        }
+        document.getElementById('sprintPlanModal').style.display = 'block';
+    }
+    
+    function closeSprintPlanModal() {
+        document.getElementById('sprintPlanModal').style.display = 'none';
+        const form = document.getElementById('sprintPlanForm');
+        if (form) {
+            form.reset();
+            const dayContainer = document.getElementById('sprintPlanDayContainer');
+            if (dayContainer) {
+                const firstDay = dayContainer.querySelector('.day-entry');
+                dayContainer.innerHTML = '';
+                if (firstDay) {
+                    dayContainer.appendChild(firstDay.cloneNode(true));
+                }
+            }
+        }
+    }
+    
+    let sprintDayIndex = 0;
+    
+    function removeSprintTask(button) {
+        const taskEntry = button.closest('.task-entry');
+        if (taskEntry) {
+            taskEntry.remove();
+        }
+    }
+    
+    function removeSprintDay(button) {
+        const dayEntry = button.closest('.day-entry');
+        if (dayEntry) {
+            dayEntry.remove();
+        }
+    }
+    
+    function handleSprintPlanSubmit(event) {
+        event.preventDefault();
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        const formData = new FormData(event.target);
+        fetch('/submit_sprint_plan', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Sprint plan submitted successfully!');
+                closeSprintPlanModal();
+                const sprintCard = document.getElementById('sprintPlanCard');
+                if (sprintCard) {
+                    sprintCard.classList.add('sprint-plan-submitted');
+                    sprintCard.style.cursor = 'not-allowed';
+                    sprintCard.style.opacity = '0.6';
+                    sprintCard.onclick = null;
+                    const icon = sprintCard.querySelector('i');
+                    const heading = sprintCard.querySelector('h3');
+                    if (icon) icon.style.opacity = '0.5';
+                    if (heading) {
+                        heading.textContent = 'Sprint Plan Submitted';
+                        heading.style.color = '#888';
+                    }
+                }
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert(data.error || 'Failed to submit sprint plan');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    }
+    
+    // Last Week Sprint Modal Functions
+    function openLastWeekSprintModal() {
+        const sprintCard = document.getElementById('lastWeekSprintCard');
+        if (sprintCard && sprintCard.classList.contains('last-week-sprint-submitted')) {
+            return;
+        }
+        document.getElementById('lastWeekSprintModal').style.display = 'block';
+    }
+    
+    function closeLastWeekSprintModal() {
+        document.getElementById('lastWeekSprintModal').style.display = 'none';
+        const form = document.getElementById('lastWeekSprintForm');
+        if (form) {
+            form.reset();
+            const dayContainer = document.getElementById('lastWeekSprintDayContainer');
+            if (dayContainer) {
+                const firstDay = dayContainer.querySelector('.day-entry');
+                dayContainer.innerHTML = '';
+                if (firstDay) {
+                    dayContainer.appendChild(firstDay.cloneNode(true));
+                }
+            }
+        }
+    }
+    
+    let lastWeekSprintDayIndex = 0;
+    
+    function removeLastWeekSprintTask(button) {
+        const taskEntry = button.closest('.task-entry');
+        if (taskEntry) {
+            taskEntry.remove();
+        }
+    }
+    
+    function removeLastWeekSprintDay(button) {
+        const dayEntry = button.closest('.day-entry');
+        if (dayEntry) {
+            dayEntry.remove();
+        }
+    }
+    
+    function handleLastWeekSprintSubmit(event) {
+        event.preventDefault();
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        const formData = new FormData(event.target);
+        fetch('/submit_last_week_sprint', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Last week sprint submitted successfully!');
+                closeLastWeekSprintModal();
+                const sprintCard = document.getElementById('lastWeekSprintCard');
+                if (sprintCard) {
+                    sprintCard.classList.add('last-week-sprint-submitted');
+                    sprintCard.style.cursor = 'not-allowed';
+                    sprintCard.style.opacity = '0.6';
+                    sprintCard.onclick = null;
+                    const icon = sprintCard.querySelector('i');
+                    const heading = sprintCard.querySelector('h3');
+                    if (icon) icon.style.opacity = '0.5';
+                    if (heading) {
+                        heading.textContent = 'Last Week Sprint Submitted';
+                        heading.style.color = '#888';
+                    }
+                }
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert(data.error || 'Failed to submit last week sprint');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    }
+    
+    // Extra Work Modal Functions
+    function openExtraWorkModal() {
+        const today = new Date();
+        today.setDate(today.getDate() - 1);
+        const yesterday = today.toISOString().split('T')[0];
+        document.getElementById('extraWorkDate').value = yesterday;
+        document.getElementById('extraWorkModal').style.display = 'block';
+    }
+    
+    function closeExtraWorkModal() {
+        document.getElementById('extraWorkModal').style.display = 'none';
+        const form = document.getElementById('extraWorkForm');
+        if (form) {
+            form.reset();
+        }
+    }
+    
+    function handleExtraWorkSubmit(event) {
+        event.preventDefault();
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        const formData = new FormData(event.target);
+        fetch('/submit_extra_work', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Extra work submitted successfully!');
+                closeExtraWorkModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert(data.error || 'Failed to submit extra work');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    }
+    
+    // Leave Approval Modal Functions
+    function openLeaveApprovalModal() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('leaveRequestDate').value = today;
+        document.getElementById('leaveApprovalModal').style.display = 'block';
+    }
+    
+    function closeLeaveApprovalModal() {
+        document.getElementById('leaveApprovalModal').style.display = 'none';
+        const form = document.getElementById('leaveApprovalForm');
+        if (form) {
+            form.reset();
+            document.getElementById('currentTaskField').style.display = 'none';
+        }
+    }
+    
+    function toggleCurrentTaskField() {
+        const leaveType = document.querySelector('input[name="leaveType"]:checked').value;
+        const currentTaskField = document.getElementById('currentTaskField');
+        const currentTaskInput = document.getElementById('leaveCurrentTask');
+        if (leaveType === 'Emergency Leave') {
+            currentTaskField.style.display = 'block';
+            currentTaskInput.required = true;
+        } else {
+            currentTaskField.style.display = 'none';
+            currentTaskInput.required = false;
+            currentTaskInput.value = '';
+        }
+    }
+    
+    function handleLeaveApprovalSubmit() {
+        const form = document.getElementById('leaveApprovalForm');
+        const leaveType = document.querySelector('input[name="leaveType"]:checked').value;
+        if (leaveType === 'Emergency Leave') {
+            const currentTask = document.getElementById('leaveCurrentTask').value.trim();
+            if (!currentTask) {
+                alert('Please enter your current task for Emergency Leave');
+                return;
+            }
+        }
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        alert('Leave approval request submitted successfully!');
+        closeLeaveApprovalModal();
+    }
+    
+    // Complaint Modal Functions
+    function openComplaintModal() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('complaintDate').value = today;
+        document.getElementById('complaintModal').style.display = 'block';
+    }
+    
+    function closeComplaintModal() {
+        document.getElementById('complaintModal').style.display = 'none';
+        const form = document.getElementById('complaintForm');
+        if (form) {
+            form.reset();
+        }
+    }
+    
+    function handleComplaintSubmit() {
+        const form = document.getElementById('complaintForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        alert('Complaint submitted successfully!');
+        closeComplaintModal();
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set today's date for all date fields
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Check work plan status
+        const employeeName = document.getElementById('workPlanEmployeeNameForCheck')?.value || '';
+        if (employeeName) {
+            const formData = new FormData();
+            formData.append('date', today);
+            formData.append('employeeName', employeeName);
+            fetch('/check_work_plan_status', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.submitted) {
+                    const workCard = document.getElementById('workPlanCard');
+                    if (workCard) {
+                        workCard.classList.add('work-plan-submitted');
+                        workCard.style.cursor = 'not-allowed';
+                        workCard.style.opacity = '0.6';
+                        workCard.onclick = null;
+                        const icon = workCard.querySelector('i');
+                        const heading = workCard.querySelector('h3');
+                        if (icon) icon.style.opacity = '0.5';
+                        if (heading) {
+                            heading.textContent = 'Work Plan Submitted Today';
+                            heading.style.color = '#888';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error checking work plan status:', error));
+        }
+        
+        // Check update work status
+        const updateEmployeeName = document.getElementById('updateWorkEmployeeNameForCheck')?.value || '';
+        if (updateEmployeeName) {
+            const formData = new FormData();
+            formData.append('date', today);
+            formData.append('employeeName', updateEmployeeName);
+            fetch('/check_update_work_status', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.submitted) {
+                    const workCard = document.getElementById('updateWorkCard');
+                    if (workCard) {
+                        workCard.classList.add('update-work-submitted');
+                        workCard.style.cursor = 'not-allowed';
+                        workCard.style.opacity = '0.6';
+                        workCard.onclick = null;
+                        const icon = workCard.querySelector('i');
+                        const heading = workCard.querySelector('h3');
+                        if (icon) icon.style.opacity = '0.5';
+                        if (heading) {
+                            heading.textContent = 'Work Updated Today';
+                            heading.style.color = '#888';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error checking update work status:', error));
+        }
+        
+        // Check sprint plan status
+        const sprintEmployeeName = document.getElementById('sprintPlanEmployeeNameForCheck')?.value || '';
+        if (sprintEmployeeName) {
+            const formData = new FormData();
+            formData.append('employeeName', sprintEmployeeName);
+            fetch('/check_sprint_plan_status', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.submitted) {
+                    const sprintCard = document.getElementById('sprintPlanCard');
+                    if (sprintCard) {
+                        sprintCard.classList.add('sprint-plan-submitted');
+                        sprintCard.style.cursor = 'not-allowed';
+                        sprintCard.style.opacity = '0.6';
+                        sprintCard.onclick = null;
+                        const icon = sprintCard.querySelector('i');
+                        const heading = sprintCard.querySelector('h3');
+                        if (icon) icon.style.opacity = '0.5';
+                        if (heading) {
+                            heading.textContent = 'Sprint Plan Submitted';
+                            heading.style.color = '#888';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error checking sprint plan status:', error));
+        }
+        
+        // Check last week sprint status
+        const lastWeekEmployeeName = document.getElementById('lastWeekSprintEmployeeNameForCheck')?.value || '';
+        if (lastWeekEmployeeName) {
+            const formData = new FormData();
+            formData.append('employeeName', lastWeekEmployeeName);
+            fetch('/check_last_week_sprint_status', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.submitted) {
+                    const sprintCard = document.getElementById('lastWeekSprintCard');
+                    if (sprintCard) {
+                        sprintCard.classList.add('last-week-sprint-submitted');
+                        sprintCard.style.cursor = 'not-allowed';
+                        sprintCard.style.opacity = '0.6';
+                        sprintCard.onclick = null;
+                        const icon = sprintCard.querySelector('i');
+                        const heading = sprintCard.querySelector('h3');
+                        if (icon) icon.style.opacity = '0.5';
+                        if (heading) {
+                            heading.textContent = 'Last Week Sprint Submitted';
+                            heading.style.color = '#888';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error checking last week sprint status:', error));
+        }
+        
+        // Add Task functionality for Work Plan
+        const addTaskBtn = document.getElementById('addWorkPlanTaskBtn');
+        if (addTaskBtn) {
+            addTaskBtn.addEventListener('click', function() {
+                const taskContainer = document.getElementById('workPlanTaskContainer');
+                const tasks = taskContainer.querySelectorAll('.task-entry');
+                if (tasks.length >= 10) {
+                    alert('Maximum 10 tasks allowed');
+                    return;
+                }
+                const newIndex = tasks.length;
+                const newTask = document.createElement('div');
+                newTask.className = 'task-entry';
+                newTask.setAttribute('data-task-index', newIndex);
+                newTask.innerHTML = `
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                    <div class="form-group">
+                        <label for="workPlanTask_${newIndex}">Task*</label>
+                        <input type="text" id="workPlanTask_${newIndex}" name="task[]" placeholder="Enter task name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="workPlanTaskDescription_${newIndex}">Task Description*</label>
+                        <textarea id="workPlanTaskDescription_${newIndex}" name="taskDescription[]" rows="2" placeholder="Enter task description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="workPlanClientName_${newIndex}">Client Name*</label>
+                        <input type="text" id="workPlanClientName_${newIndex}" name="clientName[]" placeholder="Enter client name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="workPlanTime_${newIndex}">Time Taken (in Hours)*</label>
+                        <input type="number" id="workPlanTime_${newIndex}" name="time[]" step="0.01" min="0" placeholder="e.g., 1.25, 2.5" required>
+                    </div>
+                    <button type="button" onclick="removeWorkPlanTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 10px; margin-top: 10px; cursor: pointer;">Remove Task</button>
+                `;
+                taskContainer.appendChild(newTask);
+            });
+        }
+        
+        // Add Task functionality for Update Work
+        const addUpdateTaskBtn = document.getElementById('addUpdateWorkTaskBtn');
+        if (addUpdateTaskBtn) {
+            addUpdateTaskBtn.addEventListener('click', function() {
+                const taskContainer = document.getElementById('updateWorkTaskContainer');
+                const tasks = taskContainer.querySelectorAll('.task-entry');
+                if (tasks.length >= 10) {
+                    alert('Maximum 10 tasks allowed');
+                    return;
+                }
+                const newIndex = tasks.length;
+                const newTask = document.createElement('div');
+                newTask.className = 'task-entry';
+                newTask.setAttribute('data-task-index', newIndex);
+                newTask.innerHTML = `
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                    <div class="form-group">
+                        <label for="updateWorkTask_${newIndex}">Task*</label>
+                        <input type="text" id="updateWorkTask_${newIndex}" name="task[]" placeholder="Enter task name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateWorkClientName_${newIndex}">Client Name*</label>
+                        <input type="text" id="updateWorkClientName_${newIndex}" name="clientName[]" placeholder="Enter client name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateWorkTime_${newIndex}">Time Taken (in Hours)*</label>
+                        <input type="number" id="updateWorkTime_${newIndex}" name="time[]" step="0.01" min="0" placeholder="e.g., 1.25, 2.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateWorkStatus_${newIndex}">Status*</label>
+                        <select id="updateWorkStatus_${newIndex}" name="status[]" required>
+                            <option value="">Select Status</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Remove">Remove</option>
+                            <option value="Take over">Take over</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateWorkDescription_${newIndex}">Description*</label>
+                        <textarea id="updateWorkDescription_${newIndex}" name="description[]" rows="2" placeholder="Enter description" required></textarea>
+                    </div>
+                    <button type="button" onclick="removeUpdateWorkTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 10px; margin-top: 10px; cursor: pointer;">Remove Task</button>
+                `;
+                taskContainer.appendChild(newTask);
+            });
+        }
+        
+        // Add Day functionality for Sprint Plan
+        const addDayBtn = document.getElementById('addSprintDayBtn');
+        if (addDayBtn) {
+            addDayBtn.addEventListener('click', function() {
+                const dayContainer = document.getElementById('sprintPlanDayContainer');
+                const days = dayContainer.querySelectorAll('.day-entry');
+                if (days.length >= 6) {
+                    alert('Maximum 6 days allowed');
+                    return;
+                }
+                sprintDayIndex++;
+                const newDay = document.createElement('div');
+                newDay.className = 'day-entry';
+                newDay.setAttribute('data-day-index', sprintDayIndex);
+                newDay.innerHTML = `
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <div class="form-group">
+                        <label>Date*</label>
+                        <input type="date" class="sprint-date-input" name="dates[]" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 10px;">Tasks</h4>
+                        <div id="sprintDay${sprintDayIndex}TaskContainer" class="task-container">
+                            <div class="task-entry" data-task-index="0">
+                                <div class="form-group">
+                                    <label>Task*</label>
+                                    <input type="text" name="tasks[${sprintDayIndex}][]" placeholder="Enter task" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Client Name*</label>
+                                    <input type="text" name="clientNames[${sprintDayIndex}][]" placeholder="Enter client name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Time (Hours)*</label>
+                                    <input type="number" name="times[${sprintDayIndex}][]" step="0.01" min="0" placeholder="e.g., 1.25" required>
+                                </div>
+                                <button type="button" onclick="removeSprintTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-member-btn add-sprint-task-btn" data-day="${sprintDayIndex}" style="margin-top: 10px;">+ Add New Task</button>
+                    </div>
+                    <button type="button" onclick="removeSprintDay(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 10px; margin-top: 15px; cursor: pointer; width: 100%;">Remove This Day</button>
+                `;
+                dayContainer.appendChild(newDay);
+            });
+        }
+        
+        // Add Task functionality for Sprint Plan (delegated)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('add-sprint-task-btn')) {
+                const dayIndex = e.target.getAttribute('data-day');
+                const taskContainer = document.getElementById(`sprintDay${dayIndex}TaskContainer`);
+                const tasks = taskContainer.querySelectorAll('.task-entry');
+                const newIndex = tasks.length;
+                const newTask = document.createElement('div');
+                newTask.className = 'task-entry';
+                newTask.setAttribute('data-task-index', newIndex);
+                newTask.innerHTML = `
+                    <div class="form-group">
+                        <label>Task*</label>
+                        <input type="text" name="tasks[${dayIndex}][]" placeholder="Enter task" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name*</label>
+                        <input type="text" name="clientNames[${dayIndex}][]" placeholder="Enter client name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time (Hours)*</label>
+                        <input type="number" name="times[${dayIndex}][]" step="0.01" min="0" placeholder="e.g., 1.25" required>
+                    </div>
+                    <button type="button" onclick="removeSprintTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">Remove</button>
+                `;
+                taskContainer.appendChild(newTask);
+            }
+        });
+        
+        // Add Day functionality for Last Week Sprint
+        const addLastWeekDayBtn = document.getElementById('addLastWeekSprintDayBtn');
+        if (addLastWeekDayBtn) {
+            addLastWeekDayBtn.addEventListener('click', function() {
+                const dayContainer = document.getElementById('lastWeekSprintDayContainer');
+                const days = dayContainer.querySelectorAll('.day-entry');
+                if (days.length >= 6) {
+                    alert('Maximum 6 days allowed');
+                    return;
+                }
+                lastWeekSprintDayIndex++;
+                const newDay = document.createElement('div');
+                newDay.className = 'day-entry';
+                newDay.setAttribute('data-day-index', lastWeekSprintDayIndex);
+                newDay.innerHTML = `
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <div class="form-group">
+                        <label>Date*</label>
+                        <input type="date" class="sprint-date-input" name="dates[]" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 10px;">Tasks</h4>
+                        <div id="lastWeekSprintDay${lastWeekSprintDayIndex}TaskContainer" class="task-container">
+                            <div class="task-entry" data-task-index="0">
+                                <div class="form-group">
+                                    <label>Task*</label>
+                                    <input type="text" name="tasks[${lastWeekSprintDayIndex}][]" placeholder="Enter task" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Client Name*</label>
+                                    <input type="text" name="clientNames[${lastWeekSprintDayIndex}][]" placeholder="Enter client name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Time (Hours)*</label>
+                                    <input type="number" name="times[${lastWeekSprintDayIndex}][]" step="0.01" min="0" placeholder="e.g., 1.25" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Status*</label>
+                                    <select name="statuses[${lastWeekSprintDayIndex}][]" required>
+                                        <option value="">Select Status</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Remove">Remove</option>
+                                        <option value="Take over">Take over</option>
+                                    </select>
+                                </div>
+                                <button type="button" onclick="removeLastWeekSprintTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-member-btn add-lastweek-task-btn" data-day="${lastWeekSprintDayIndex}" style="margin-top: 10px;">+ Add New Task</button>
+                    </div>
+                    <button type="button" onclick="removeLastWeekSprintDay(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 10px; margin-top: 15px; cursor: pointer; width: 100%;">Remove This Day</button>
+                `;
+                dayContainer.appendChild(newDay);
+            });
+        }
+        
+        // Add Task functionality for Last Week Sprint (delegated)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('add-lastweek-task-btn')) {
+                const dayIndex = e.target.getAttribute('data-day');
+                const taskContainer = document.getElementById(`lastWeekSprintDay${dayIndex}TaskContainer`);
+                const tasks = taskContainer.querySelectorAll('.task-entry');
+                const newIndex = tasks.length;
+                const newTask = document.createElement('div');
+                newTask.className = 'task-entry';
+                newTask.setAttribute('data-task-index', newIndex);
+                newTask.innerHTML = `
+                    <div class="form-group">
+                        <label>Task*</label>
+                        <input type="text" name="tasks[${dayIndex}][]" placeholder="Enter task" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name*</label>
+                        <input type="text" name="clientNames[${dayIndex}][]" placeholder="Enter client name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time (Hours)*</label>
+                        <input type="number" name="times[${dayIndex}][]" step="0.01" min="0" placeholder="e.g., 1.25" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status*</label>
+                        <select name="statuses[${dayIndex}][]" required>
+                            <option value="">Select Status</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Remove">Remove</option>
+                            <option value="Take over">Take over</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="removeLastWeekSprintTask(this)" style="background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">Remove</button>
+                `;
+                taskContainer.appendChild(newTask);
+            }
+        });
+    });
+    </script>
+    
+    <script src="{{ url_for('static', filename='JS/grc_dashboard.js') }}"></script>
+</body>
+</html>

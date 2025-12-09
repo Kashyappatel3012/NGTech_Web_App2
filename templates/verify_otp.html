@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGTech | OTP Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/verify_otp.css') }}">
+</head>
+<body>
+    <div class="otp-container">
+        <div class="cyber-elements">
+            <div class="cyber-circle"></div>
+            <div class="cyber-circle"></div>
+            <div class="cyber-line"></div>
+        </div>
+        
+        <div class="logo">
+            <img src="../static/Images/NGTech_Logo.png" alt="NGTech Logo">
+            <h1>OTP VERIFICATION</h1>
+            <p>Securing Today, Safeguarding Tomorrow</p>
+        </div>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="otp-form">
+            <h2>Two-Factor Authentication</h2>
+            
+            <div class="info-text">
+                <p>We've sent an <span class="highlight">8-character OTP</span> to your email address.</p>
+             </div>
+            
+            <div class="timer" id="timer">
+            This OTP will expire in <span id="time">{{ "%02d:%02d" % (remaining_time // 60, remaining_time % 60) }}</span>
+            </div>
+            
+            <form method="POST" action="{{ url_for('verify_otp') }}" id="otpForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="browser_fingerprint" id="browserFingerprintInput">
+                <div class="form-group">
+                    <label for="otp">Enter OTP Code</label>
+                    <i class="fas fa-key"></i>
+                    <input type="text" id="otp" name="otp" placeholder="e.g., A7b#9K2@" required autocomplete="off" maxlength="8">
+                </div>
+                
+                <button type="submit" class="verify-btn">VERIFY CODE</button>
+            </form>
+            
+            <div class="back-link">
+                <a href="{{ url_for('login') }}"><i class="fas fa-arrow-left"></i> Back to Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="{{ url_for('static', filename='js/verify_otp.js') }}"></script>
+</body>
+</html>
