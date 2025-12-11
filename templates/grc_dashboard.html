@@ -21,7 +21,7 @@
                 <a href="#reporting-section"><i class="fas fa-file-alt"></i> Reporting</a>
                 <a href="#chat-section"><i class="fas fa-comments"></i> AI Chat Board</a>
                 <a href="#work-section"><i class="fas fa-tasks"></i> Update Your Work</a>
-                <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </nav>
         </div>
 
@@ -65,9 +65,13 @@
 
 <div class="progress-chart">
     <span class="chart-title">Previous Month Performance</span>
-    <canvas id="progressChart" style="max-width: 500px; max-height: 220px; width:100%; height:260px;"></canvas>
+    <div id="progressChartContainer" style="width: 100%; height: 260px; position: relative; display: block; min-height: 260px;">
+        <canvas id="progressChart" style="display: block; width: 100% !important; height: 100% !important;"></canvas>
+    </div>
     <span class="chart-title" style="margin-top: 2rem;">Last Year Performance</span>
-    <canvas id="lastYearChart" style="max-width: 500px; max-height: 220px; width:100%; height:260px;"></canvas>
+    <div id="lastYearChartContainer" style="width: 100%; height: 260px; position: relative; display: block; min-height: 260px;">
+        <canvas id="lastYearChart" style="display: block; width: 100% !important; height: 100% !important;"></canvas>
+    </div>
 </div>
 
     </div>
@@ -1319,6 +1323,177 @@
     </script>
     <script>
     window.performanceHistory = {% if performance_history %}{{ performance_history | tojson }}{% else %}[]{% endif %};
+    
+    // Debug logging for chart data
+    console.log('GRC Chart Data Setup:');
+    console.log('- Performance Data:', window.performanceData);
+    console.log('- Performance History:', window.performanceHistory);
+    console.log('- Chart.js available:', typeof Chart !== 'undefined');
+    </script>
+    
+    <script>
+    // Chart initialization fallback - ensures charts render even if external JS fails
+    (function() {
+        let fallbackRetries = 0;
+        const MAX_FALLBACK_RETRIES = 50; // Maximum 10 seconds (50 * 200ms)
+        
+        function initChartsFallback() {
+            // Check if charts already initialized
+            const progressCtx = document.getElementById('progressChart');
+            const lastYearCtx = document.getElementById('lastYearChart');
+            
+            if (!progressCtx || !lastYearCtx) {
+                fallbackRetries++;
+                if (fallbackRetries >= MAX_FALLBACK_RETRIES) {
+                    console.error('GRC: Chart canvas elements not found after maximum retries.');
+                    return;
+                }
+                console.warn('GRC: Chart canvas elements not found yet, retrying... (' + fallbackRetries + '/' + MAX_FALLBACK_RETRIES + ')');
+                setTimeout(initChartsFallback, 200);
+                return;
+            }
+            
+            // Wait for Chart.js
+            if (typeof Chart === 'undefined') {
+                fallbackRetries++;
+                if (fallbackRetries >= MAX_FALLBACK_RETRIES) {
+                    console.error('GRC: Chart.js failed to load after maximum retries. Please check your internet connection or CDN availability.');
+                    return;
+                }
+                console.warn('GRC: Chart.js not loaded yet, retrying... (' + fallbackRetries + '/' + MAX_FALLBACK_RETRIES + ')');
+                setTimeout(initChartsFallback, 200);
+                return;
+            }
+            
+            // Reset retry counter on success
+            fallbackRetries = 0;
+            
+            // Wait a bit more to let external JS initialize first, but not too long
+            setTimeout(function() {
+                // Force re-check canvas visibility
+                if (progressCtx && !progressCtx.chartInstance) {
+                    console.log('GRC Fallback: Initializing progress chart...');
+                    try {
+                        const perfData = window.performanceData || {};
+                        const perfScores = [
+                            perfData.punctuality || 0,
+                            perfData.clientSatisfaction || 0,
+                            perfData.behaviour || 0,
+                            perfData.communicationSkills || 0,
+                            perfData.technicalSkills || 0,
+                            perfData.teamCoordination || 0
+                        ];
+                        
+                        function getBarColor(score) {
+                            if (score <= 6) return 'rgba(255, 99, 132, 0.8)';
+                            if (score <= 8) return 'rgba(255, 206, 86, 0.8)';
+                            return 'rgba(75, 192, 192, 0.8)';
+                        }
+                        
+                        const container = progressCtx.parentElement;
+                        if (container) {
+                            container.style.display = 'block';
+                            container.style.width = '100%';
+                            container.style.height = '260px';
+                        }
+                        progressCtx.style.display = 'block';
+                        
+                        progressCtx.chartInstance = new Chart(progressCtx.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: ['Punctuality', 'Client\nSatisfaction', 'Behaviour', 'Communication\nSkills', 'Technical\nSkills', 'Team\nCoordination'],
+                                datasets: [{
+                                    label: 'Performance Metrics',
+                                    data: perfScores,
+                                    backgroundColor: perfScores.map(getBarColor),
+                                    borderColor: perfScores.map(s => getBarColor(s).replace('0.8', '1')),
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { ticks: { font: { size: 12 } } },
+                                    y: { beginAtZero: true, max: 10, ticks: { stepSize: 1 } }
+                                }
+                            }
+                        });
+                        console.log('GRC Fallback: Progress chart initialized');
+                    } catch (e) {
+                        console.error('GRC Fallback: Error initializing progress chart:', e);
+                    }
+                }
+                
+                // Initialize last year chart if needed
+                if (lastYearCtx && !lastYearCtx.chartInstance) {
+                    console.log('GRC Fallback: Initializing last year chart...');
+                    try {
+                        const historyData = window.performanceHistory && Array.isArray(window.performanceHistory) 
+                            ? window.performanceHistory 
+                            : [];
+                        
+                        if (historyData.length > 0) {
+                            const labels = [];
+                            const data = [];
+                            for (let i = 0; i < historyData.length; i++) {
+                                const item = historyData[i];
+                                if (item && item.month_name && item.year_short) {
+                                    labels.push(`${item.month_name}\n'${item.year_short}`);
+                                    data.push(item.average !== undefined ? item.average : 0);
+                                }
+                            }
+                            
+                            if (labels.length > 0) {
+                                const container = lastYearCtx.parentElement;
+                                if (container) {
+                                    container.style.display = 'block';
+                                    container.style.width = '100%';
+                                    container.style.height = '260px';
+                                }
+                                lastYearCtx.style.display = 'block';
+                                
+                                lastYearCtx.chartInstance = new Chart(lastYearCtx.getContext('2d'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: labels,
+                                        datasets: [{
+                                            label: 'Performance Trend',
+                                            data: data,
+                                            borderColor: 'rgba(52, 152, 219, 1)',
+                                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                            tension: 0.4,
+                                            fill: true,
+                                            pointRadius: 5
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { legend: { display: false } },
+                                        scales: {
+                                            y: { 
+                                                beginAtZero: true,
+                                                max: 10, 
+                                                ticks: { stepSize: 1 } 
+                                            }
+                                        }
+                                    }
+                                });
+                                console.log('GRC Fallback: Last year chart initialized');
+                            }
+                        }
+                    } catch (e) {
+                        console.error('GRC Fallback: Error initializing last year chart:', e);
+                    }
+                }
+            }, 200);
+        }
+        
+        // Start fallback initialization after a short delay
+        setTimeout(initChartsFallback, 300);
+    })();
     </script>
     
     <!-- Work Plan and Update Work JavaScript Functions -->
@@ -1770,8 +1945,49 @@
             form.reportValidity();
             return;
         }
-        alert('Leave approval request submitted successfully!');
-        closeLeaveApprovalModal();
+        
+        // Collect form data
+        const formData = {
+            employeeName: document.getElementById('leaveEmployeeName').value,
+            requestDate: document.getElementById('leaveRequestDate').value,
+            leaveType: leaveType,
+            leaveFrom: document.getElementById('leaveFrom').value,
+            leaveTo: document.getElementById('leaveTo').value,
+            reason: document.getElementById('leaveReason').value,
+            currentTask: document.getElementById('leaveCurrentTask').value || ''
+        };
+        
+        // Disable submit button to prevent double submission
+        const submitBtn = form.querySelector('.submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        
+        // Send request to backend
+        fetch('/submit_leave_request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Leave approval request submitted successfully!');
+                closeLeaveApprovalModal();
+            } else {
+                alert(data.message || 'Failed to submit leave request. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting leave request:', error);
+            alert('An error occurred while submitting your request. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
     }
     
     // Complaint Modal Functions
@@ -1795,8 +2011,91 @@
             form.reportValidity();
             return;
         }
-        alert('Complaint submitted successfully!');
-        closeComplaintModal();
+        
+        // Collect form data
+        const formData = {
+            employeeName: document.getElementById('complaintEmployeeName').value,
+            employeeTeam: document.getElementById('complaintEmployeeTeam').value,
+            date: document.getElementById('complaintDate').value,
+            personName: document.getElementById('complaintPersonName').value,
+            complainDescription: document.getElementById('complaintDescription').value
+        };
+        
+        // Disable submit button to prevent double submission
+        const submitBtn = form.querySelector('.submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        
+        // Send request to backend
+        fetch('/submit_complaint', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Complaint submitted successfully!');
+                closeComplaintModal();
+            } else {
+                alert(data.message || 'Failed to submit complaint. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting complaint:', error);
+            alert('An error occurred while submitting your complaint. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    }
+    
+    // Function to check if current time is between 4 AM and 12 PM
+    function isWorkPlanTimeAllowed() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        // Check if time is between 4 AM (4) and 12 PM (12)
+        return currentHour >= 4 && currentHour < 12;
+    }
+    
+    // Function to enable/disable work plan card based on time
+    function updateWorkPlanCardTimeRestriction() {
+        const workCard = document.getElementById('workPlanCard');
+        if (!workCard) return;
+        
+        // Don't modify if already submitted (check if onclick is null or has work-plan-submitted class)
+        if (workCard.onclick === null || workCard.classList.contains('work-plan-submitted')) {
+            return;
+        }
+        
+        const isAllowed = isWorkPlanTimeAllowed();
+        
+        if (!isAllowed) {
+            // Disable the button outside allowed time
+            workCard.style.cursor = 'not-allowed';
+            workCard.style.opacity = '0.6';
+            const originalOnclick = workCard.onclick;
+            workCard.onclick = function() {
+                alert('Submit Today\'s Work Plan is only available between 4 AM and 12 PM.');
+            };
+            const icon = workCard.querySelector('i');
+            const heading = workCard.querySelector('h3');
+            if (icon) icon.style.opacity = '0.5';
+            if (heading) heading.style.color = '#888';
+        } else {
+            // Enable the button during allowed time
+            workCard.style.cursor = 'pointer';
+            workCard.style.opacity = '1';
+            workCard.onclick = openWorkPlanModal;
+            const icon = workCard.querySelector('i');
+            const heading = workCard.querySelector('h3');
+            if (icon) icon.style.opacity = '1';
+            if (heading) heading.style.color = '';
+        }
     }
     
     // Initialize on page load
@@ -1831,10 +2130,65 @@
                             heading.style.color = '#888';
                         }
                     }
+                } else {
+                    // If not submitted, check time restriction
+                    updateWorkPlanCardTimeRestriction();
                 }
             })
             .catch(error => console.error('Error checking work plan status:', error));
+        } else {
+            // If no employee name, still check time restriction
+            updateWorkPlanCardTimeRestriction();
         }
+        
+        // Check time restriction periodically (every minute)
+        setInterval(updateWorkPlanCardTimeRestriction, 60000);
+        
+        // Function to check if current time is between 6 PM and 11 PM
+        function isUpdateWorkTimeAllowed() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            // Check if time is between 6 PM (18) and 11 PM (23)
+            return currentHour >= 18 && currentHour < 23;
+        }
+        
+        // Function to enable/disable update work card based on time
+        function updateWorkCardTimeRestriction() {
+            const workCard = document.getElementById('updateWorkCard');
+            if (!workCard) return;
+            
+            // Don't modify if already submitted (check if onclick is null or has update-work-submitted class)
+            if (workCard.onclick === null || workCard.classList.contains('update-work-submitted')) {
+                return;
+            }
+            
+            const isAllowed = isUpdateWorkTimeAllowed();
+            
+            if (!isAllowed) {
+                // Disable the button outside allowed time
+                workCard.style.cursor = 'not-allowed';
+                workCard.style.opacity = '0.6';
+                workCard.onclick = function() {
+                    alert('Update Today\'s Work is only available between 6 PM and 11 PM.');
+                };
+                const icon = workCard.querySelector('i');
+                const heading = workCard.querySelector('h3');
+                if (icon) icon.style.opacity = '0.5';
+                if (heading) heading.style.color = '#888';
+            } else {
+                // Enable the button during allowed time
+                workCard.style.cursor = 'pointer';
+                workCard.style.opacity = '1';
+                workCard.onclick = openUpdateWorkModal;
+                const icon = workCard.querySelector('i');
+                const heading = workCard.querySelector('h3');
+                if (icon) icon.style.opacity = '1';
+                if (heading) heading.style.color = '';
+            }
+        }
+        
+        // Apply time restriction immediately on page load (before async status check)
+        updateWorkCardTimeRestriction();
         
         // Check update work status
         const updateEmployeeName = document.getElementById('updateWorkEmployeeNameForCheck')?.value || '';
@@ -1863,10 +2217,19 @@
                             heading.style.color = '#888';
                         }
                     }
+                } else {
+                    // If not submitted, check time restriction
+                    updateWorkCardTimeRestriction();
                 }
             })
             .catch(error => console.error('Error checking update work status:', error));
+        } else {
+            // If no employee name, still check time restriction
+            updateWorkCardTimeRestriction();
         }
+        
+        // Check time restriction periodically (every minute)
+        setInterval(updateWorkCardTimeRestriction, 60000);
         
         // Check sprint plan status
         const sprintEmployeeName = document.getElementById('sprintPlanEmployeeNameForCheck')?.value || '';

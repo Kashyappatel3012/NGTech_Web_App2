@@ -60,11 +60,18 @@
                     </div>
                 </div>
                 
-                <div class="browser-fingerprint">
-                    <label>Browser Fingerprint</label>
-                    <div class="fingerprint-display" id="browserFingerprint">
-                        <i class="fas fa-fingerprint"></i>
-                        <span id="fingerprintValue">Calculating...</span>
+                
+                <div class="form-group captcha-group">
+                    <label for="captcha">Enter CAPTCHA</label>
+                    <div class="captcha-container">
+                        <div class="captcha-image-container">
+                            <img id="captchaImage" src="" alt="CAPTCHA" style="display: none;">
+                            <span id="captchaText" style="display: none;"></span>
+                            <button type="button" id="refreshCaptcha" class="refresh-captcha-btn" title="Refresh CAPTCHA">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <input type="text" id="captcha" name="captcha" placeholder="Enter CAPTCHA" required autocomplete="off" maxlength="4" style="text-transform: uppercase;">
                     </div>
                 </div>
                 

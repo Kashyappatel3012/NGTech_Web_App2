@@ -48,137 +48,307 @@ document.addEventListener('DOMContentLoaded', function() {
     const barColors = perfScores.map(getBarColor);
     const barBorderColors = perfScores.map(getBarBorderColor);
 
-    // Bar Chart
-    const progressCtx = document.getElementById('progressChart');
-    if (progressCtx) {
-        new Chart(progressCtx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: [
-                      'Punctuality',
-                    'Client\nSatisfaction',
-                    'Behaviour',
-                    'Communication\nSkills',
-                    'Technical\nSkills',
-                    'Team\nCoordination'
-                ],
-                datasets: [{
-                    label: 'Performance Metrics',
-                    data: perfScores,
-                    backgroundColor: barColors,
-                    borderColor: barBorderColors,
-                    borderWidth: 2,
-                    barPercentage: 1.5,
-                    categoryPercentage: 0.4
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            font: { size: 12 },
-                            callback: function(value) {
-                                const label = this.getLabelForValue(value);
-                                return label.split('\n');
-                            },
-                            maxRotation: 0,
-                            minRotation: 0,
-                            autoSkip: false
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 10
-                    }
-                }
-            }
-        });
-    }
-
-    // --- Chart.js Line Chart for Last Year ---
-// Replace the line chart code with this updated version
-const lastYearCtx = document.getElementById('lastYearChart');
-if (lastYearCtx && window.performanceHistory) {
-    const historyData = window.performanceHistory;
+    // Wait for Chart.js to load
+    let chartInitRetries = 0;
+    const MAX_CHART_INIT_RETRIES = 50; // Maximum 5 seconds (50 * 100ms)
     
-    // Extract labels and data from performance history
-    const labels = historyData.map(item => `${item.month_name}\n'${item.year_short}`);
-    const data = historyData.map(item => item.average);
-    
-    new Chart(lastYearCtx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Performance Trend',
-                data: data,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.1,
-                fill: true,
-                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-                pointBorderColor: '#fff',
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { 
-                    display: false,
-                    position: 'top'
-                },
-                tooltip: {
-                    callbacks: {
-                        title: function(context) {
-                            const index = context[0].dataIndex;
-                            const item = historyData[index];
-                            const fullMonth = new Date(item.year, item.month - 1).toLocaleString('default', { month: 'long' });
-                            return `${fullMonth} ${item.year}`;
-                        },
-                        label: function(context) {
-                            return `Score: ${context.raw}/10`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    min: Math.max(0, Math.min(...data) - 1), // Dynamic min based on data
-                    max: 10,
-                    title: {
-                        display: true,
-                        text: 'Performance Score'
-                    },
-                    ticks: {
-                        stepSize: 1
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Timeline'
-                    },
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 90,
-                        minRotation: 90,
-                        font: {
-                            size: 12
-                        }
-                    }
-                }
+    function initializeCharts() {
+        if (typeof Chart === 'undefined') {
+            chartInitRetries++;
+            if (chartInitRetries >= MAX_CHART_INIT_RETRIES) {
+                console.error('Chart.js failed to load after maximum retries. Please check your internet connection or CDN availability.');
+                return;
             }
+            console.warn('Chart.js not loaded yet, retrying... (' + chartInitRetries + '/' + MAX_CHART_INIT_RETRIES + ')');
+            setTimeout(initializeCharts, 100);
+            return;
         }
-    });
-}
+        
+        // Reset retry counter on success
+        chartInitRetries = 0;
+
+        // Bar Chart - Previous Month Performance
+        const progressCtx = document.getElementById('progressChart');
+        if (progressCtx) {
+            console.log('Initializing progressChart...');
+            console.log('Performance data:', performanceData);
+            console.log('Performance scores:', perfScores);
+            
+            // Destroy existing chart if any
+            if (progressCtx.chartInstance) {
+                progressCtx.chartInstance.destroy();
+                progressCtx.chartInstance = null;
+            }
+            
+            try {
+                // Ensure canvas is visible and has dimensions
+                const canvasContainer = progressCtx.parentElement;
+                if (canvasContainer) {
+                    canvasContainer.style.display = 'block';
+                    canvasContainer.style.width = '100%';
+                    canvasContainer.style.height = '260px';
+                    canvasContainer.style.position = 'relative';
+                }
+                
+                progressCtx.style.display = 'block';
+                progressCtx.width = progressCtx.offsetWidth || 500;
+                progressCtx.height = progressCtx.offsetHeight || 260;
+                
+                progressCtx.chartInstance = new Chart(progressCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            'Punctuality',
+                            'Client\nSatisfaction',
+                            'Behaviour',
+                            'Communication\nSkills',
+                            'Technical\nSkills',
+                            'Team\nCoordination'
+                        ],
+                        datasets: [{
+                            label: 'Performance Metrics',
+                            data: perfScores,
+                            backgroundColor: barColors,
+                            borderColor: barBorderColors,
+                            borderWidth: 2,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Score: ${context.parsed.y}/10`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: { size: 12 },
+                                    callback: function(value) {
+                                        const label = this.getLabelForValue(value);
+                                        return label.split('\n');
+                                    },
+                                    maxRotation: 0,
+                                    minRotation: 0,
+                                    autoSkip: false
+                                },
+                                grid: {
+                                    display: true
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: { size: 11 }
+                                },
+                                grid: {
+                                    display: true
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Progress chart initialized successfully');
+                console.log('Chart instance:', progressCtx.chartInstance);
+            } catch (error) {
+                console.error('Error initializing progress chart:', error);
+                console.error('Error stack:', error.stack);
+            }
+        } else {
+            console.error('progressChart canvas element not found!');
+        }
+
+        // Line Chart - Last Year Performance
+        const lastYearCtx = document.getElementById('lastYearChart');
+        if (lastYearCtx) {
+            console.log('Initializing lastYearChart...');
+            console.log('Performance history:', window.performanceHistory);
+            
+            // Destroy existing chart if any
+            if (lastYearCtx.chartInstance) {
+                lastYearCtx.chartInstance.destroy();
+                lastYearCtx.chartInstance = null;
+            }
+            
+            try {
+                // Ensure canvas is visible and has dimensions
+                const canvasContainer = lastYearCtx.parentElement;
+                if (canvasContainer) {
+                    canvasContainer.style.display = 'block';
+                    canvasContainer.style.width = '100%';
+                    canvasContainer.style.height = '260px';
+                    canvasContainer.style.position = 'relative';
+                }
+                
+                lastYearCtx.style.display = 'block';
+                lastYearCtx.width = lastYearCtx.offsetWidth || 500;
+                lastYearCtx.height = lastYearCtx.offsetHeight || 260;
+                
+                const historyData = window.performanceHistory && Array.isArray(window.performanceHistory) 
+                    ? window.performanceHistory 
+                    : [];
+                
+                if (historyData.length > 0) {
+                    // Extract labels and data safely
+                    const labels = [];
+                    const data = [];
+                    
+                    for (let i = 0; i < historyData.length; i++) {
+                        const item = historyData[i];
+                        if (item && item.month_name && item.year_short) {
+                            labels.push(`${item.month_name}\n'${item.year_short}`);
+                            data.push(item.average !== undefined && item.average !== null ? item.average : 0);
+                        }
+                    }
+                    
+                    console.log('Last year chart labels:', labels);
+                    console.log('Last year chart data:', data);
+                    
+                    if (labels.length > 0 && data.length > 0) {
+                        // Calculate min safely
+                        const validData = data.filter(d => !isNaN(d) && d !== null && d !== undefined && d >= 0);
+                        const dataMin = validData.length > 0 ? Math.min(...validData) : 0;
+                        const yMin = Math.max(0, dataMin > 0 ? (dataMin - 1) : 0);
+                        
+                        lastYearCtx.chartInstance = new Chart(lastYearCtx.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Performance Trend',
+                                    data: data,
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    tension: 0.1,
+                                    fill: true,
+                                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                                    pointBorderColor: '#fff',
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    pointHoverBackgroundColor: '#fff',
+                                    pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { 
+                                        display: false,
+                                        position: 'top'
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            title: function(context) {
+                                                if (historyData.length > 0 && context.length > 0) {
+                                                    const index = context[0].dataIndex;
+                                                    const item = historyData[index];
+                                                    if (item && item.year && item.month) {
+                                                        const fullMonth = new Date(item.year, item.month - 1).toLocaleString('default', { month: 'long' });
+                                                        return `${fullMonth} ${item.year}`;
+                                                    }
+                                                }
+                                                return '';
+                                            },
+                                            label: function(context) {
+                                                return `Score: ${context.raw}/10`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: validData.length === 0 || dataMin === 0,
+                                        min: validData.length > 0 ? yMin : 0,
+                                        max: 10,
+                                        title: {
+                                            display: true,
+                                            text: 'Performance Score'
+                                        },
+                                        ticks: {
+                                            stepSize: 1
+                                        }
+                                    },
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Timeline'
+                                        },
+                                        ticks: {
+                                            autoSkip: false,
+                                            maxRotation: 90,
+                                            minRotation: 90,
+                                            font: {
+                                                size: 12
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        console.log('Last year chart initialized successfully');
+                    } else {
+                        console.warn('No valid data for last year chart');
+                        // Show placeholder
+                        lastYearCtx.chartInstance = new Chart(lastYearCtx.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: ['No Data Available'],
+                                datasets: [{ label: 'Performance Trend', data: [0], borderColor: 'rgba(200, 200, 200, 0.5)' }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: true, max: 10 } }
+                            }
+                        });
+                    }
+                } else {
+                    console.warn('No performance history data available');
+                    // Show placeholder
+                    lastYearCtx.chartInstance = new Chart(lastYearCtx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['No Data Available'],
+                            datasets: [{ label: 'Performance Trend', data: [0], borderColor: 'rgba(200, 200, 200, 0.5)' }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, max: 10 } }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error initializing last year chart:', error);
+                console.error('Error stack:', error.stack);
+            }
+        } else {
+            console.error('lastYearChart canvas element not found!');
+        }
+    }
+    
+    // Start chart initialization with delay to ensure DOM and Chart.js are ready
+    setTimeout(function() {
+        initializeCharts();
+    }, 200);
 
 // Disaster Recovery Evidence Form Submission Handler
 function handleDisasterRecoveryEvidenceSubmit(event) {
@@ -300,15 +470,47 @@ function handleDisasterRecoveryEvidenceSubmit(event) {
 
     // Accordion functionality
     document.querySelectorAll('.accordion-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             this.classList.toggle('active');
             const content = this.nextElementSibling;
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                this.querySelector('.fa-chevron-down').style.transform = 'rotate(0deg)';
+            const chevron = this.querySelector('.fa-chevron-down');
+            
+            // Check if content element exists and has the correct class
+            if (!content || !content.classList.contains('accordion-content')) {
+                console.error('Accordion content not found or incorrect class');
+                return;
+            }
+            
+            // Get the current max-height value (inline style or computed)
+            const currentMaxHeight = content.style.maxHeight;
+            const computedStyle = window.getComputedStyle(content);
+            const computedMaxHeight = computedStyle.maxHeight;
+            
+            // Determine if accordion is currently open
+            // It's open if maxHeight is set and not 0px or 0
+            const isOpen = (currentMaxHeight && 
+                           currentMaxHeight !== '0px' && 
+                           currentMaxHeight !== '0' &&
+                           currentMaxHeight !== '') ||
+                           (computedMaxHeight && 
+                            computedMaxHeight !== '0px' && 
+                            computedMaxHeight !== 'none');
+            
+            if (isOpen) {
+                // Close accordion
+                content.style.maxHeight = '0px';
+                if (chevron) {
+                    chevron.style.transform = 'rotate(0deg)';
+                }
             } else {
+                // Open accordion
                 content.style.maxHeight = content.scrollHeight + "px";
-                this.querySelector('.fa-chevron-down').style.transform = 'rotate(180deg)';
+                if (chevron) {
+                    chevron.style.transform = 'rotate(180deg)';
+                }
             }
         });
     });

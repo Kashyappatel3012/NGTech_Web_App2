@@ -1,0 +1,8 @@
+Database already exists - keeping existing data
+Found: audit_user (ID: 3)
+Old fingerprint: d492bdacd9c3dc403c9d792a1e70feb0
+Setting new fingerprint: d492bdacd9c3dc403c9d792a1e70feb0
+Committed to database
+Stored fingerprint: d492bdacd9c3dc403c9d792a1e70feb0
+Match: True
+SUCCESS! Fingerprint updated correctly.

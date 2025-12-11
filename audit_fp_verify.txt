@@ -1,0 +1,15 @@
+Database already exists - keeping existing data
+Verifying Audit User fingerprint...
+Audit User: audit_user (ID: 3)
+Stored fingerprint: d492bdacd9c3dc403c9d792a1e70feb0
+Length: 32
+
+Testing with fingerprint: d492bdacd9c3dc403c9d792a1e70feb0
+WARNING: Using auto-generated encryption key. Set ENCRYPTION_MASTER_KEY environment variable for production!
+Validation result: is_valid=True, user=audit_user
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "C:\Users\patel\OneDrive\Desktop\NTP33\verify_audit_fingerprint.py", line 41, in <module>
+      File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>

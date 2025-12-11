@@ -22,8 +22,17 @@ from flask_mail import Mail, Message
 from datetime import datetime, timedelta
 from flask_session import Session
 import tempfile
+import io
+import base64
 
 import pytz
+
+# Try to import PIL for CAPTCHA generation
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -207,25 +216,28 @@ from GRC_Dashboard_Files.Website_VAPT_Compliance_Certificate import grc_website_
 from GRC_Dashboard_Files.Public_IP_VAPT_Compliance_Certificate import grc_public_ip_vapt_compliance_certificate_bp
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '3c0cdbae7019ddee299cf614a8966fc07bb50ae2c5081daa460637ebcd1eee47')
 
 # Security: Disable debug mode in production
 # Set DEBUG=False in production via environment variable
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 # Database configuration with fallback
-
-# Try to use instance directory, fallback to temp directory if needed
-db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'db.sqlite')
-if not os.path.exists(os.path.dirname(db_path)):
-    os.makedirs(os.path.dirname(db_path), mode=0o700, exist_ok=True)  # Secure permissions for database directory
+# Check for production database URL (PAAS providers set this automatically)
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Convert DATABASE_URL format (postgres://) to SQLAlchemy format (postgresql://)
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("✅ Using PostgreSQL database (Production mode)")
 else:
-    # Set secure permissions on existing directory
-    try:
-        os.chmod(os.path.dirname(db_path), 0o700)
-    except Exception:
-        pass  # Ignore permission errors if we can't set them
+    # Development: Use SQLite
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'db.sqlite')
+    if not os.path.exists(os.path.dirname(db_path)):
+        os.makedirs(os.path.dirname(db_path), mode=0o700, exist_ok=True)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    print("✅ Using SQLite database (Development mode)")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
@@ -242,13 +254,13 @@ else:
     except Exception:
         pass  # Ignore permission errors if we can't set them
 
-# Email configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'techumen3012@gmail.com'
-app.config['MAIL_PASSWORD'] = 'imso zkvi tdmz rrxu'
-app.config['MAIL_DEFAULT_SENDER'] = 'techumen3012@gmail.com'
+# Email configuration - use environment variables in production
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'techumen3012@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'imso zkvi tdmz rrxu')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'techumen3012@gmail.com')
 
 session_dir = os.path.join(tempfile.gettempdir(), 'ntp2_flask_sessions')
 # Security: Set secure permissions on session directory
@@ -419,6 +431,101 @@ class ClientMail(db.Model):
 # ...existing code...
 
 # Helper Functions
+def generate_captcha_text():
+    """Generate a random 4-character alphanumeric CAPTCHA"""
+    characters = string.ascii_uppercase + string.digits
+    # Exclude similar looking characters (0, O, I, 1, etc.)
+    characters = characters.replace('0', '').replace('O', '').replace('I', '').replace('1', '').replace('L', '')
+    return ''.join(random.choice(characters) for _ in range(4))
+
+def create_captcha_image(text):
+    """Create a CAPTCHA image with the given text"""
+    if not PIL_AVAILABLE:
+        # Fallback: return None if PIL is not available
+        return None
+    
+    # Image dimensions
+    width, height = 120, 40
+    
+    # Create image with white background
+    image = Image.new('RGB', (width, height), color='white')
+    draw = ImageDraw.Draw(image)
+    
+    # Try to use a default font, fallback to default if not available
+    # Cross-platform font handling: Try Linux fonts first (for PAAS), then Windows, then default
+    font = None
+    font_paths = [
+        # Linux/PAAS platform fonts (tried first)
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf",
+        # Windows fonts (fallback)
+        "arial.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+        # macOS fonts (fallback)
+        "/Library/Fonts/Arial.ttf",
+        "/System/Library/Fonts/Helvetica.ttc",
+    ]
+    
+    for font_path in font_paths:
+        try:
+            if os.path.exists(font_path):
+                font = ImageFont.truetype(font_path, 24)
+                break
+        except:
+            continue
+    
+    # Use default font if no system fonts available (works on all platforms)
+    if font is None:
+        font = ImageFont.load_default()
+    
+    # Draw text with some noise
+    text_width = draw.textlength(text, font=font)
+    x = (width - text_width) / 2
+    y = (height - 24) / 2
+    
+    # Draw text in dark color
+    draw.text((x, y), text, fill='black', font=font)
+    
+    # Add some noise lines
+    for _ in range(3):
+        x1 = random.randint(0, width)
+        y1 = random.randint(0, height)
+        x2 = random.randint(0, width)
+        y2 = random.randint(0, height)
+        draw.line([(x1, y1), (x2, y2)], fill='gray', width=1)
+    
+    # Add some noise dots
+    for _ in range(10):
+        x = random.randint(0, width)
+        y = random.randint(0, height)
+        draw.point((x, y), fill='gray')
+    
+    # Convert to base64 string
+    buffer = io.BytesIO()
+    image.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    return img_str
+
+def validate_captcha(user_input, session_key='captcha_answer'):
+    """Validate CAPTCHA input against session stored answer"""
+    if not user_input:
+        return False
+    
+    # Get stored CAPTCHA answer from session
+    stored_answer = session.get(session_key)
+    if not stored_answer:
+        return False
+    
+    # Compare (case-insensitive, strip whitespace)
+    user_input_clean = user_input.strip().upper()
+    stored_answer_clean = str(stored_answer).strip().upper()
+    
+    # Clear CAPTCHA from session after validation (one-time use)
+    session.pop(session_key, None)
+    
+    return user_input_clean == stored_answer_clean
+
 def _decrypt_fingerprint_for_api(encrypted_fingerprint):
     """Helper function to decrypt browser fingerprint for API responses"""
     if not encrypted_fingerprint:
@@ -436,20 +543,23 @@ def validate_browser_fingerprint(browser_fingerprint, user=None):
     If user is None, check if fingerprint exists for any user.
     Returns (is_valid, user_found) tuple
     
-    Note: Currently using MD5 for backward compatibility with existing database fingerprints
+    Note: 
+    - Currently using MD5 for backward compatibility with existing database fingerprints
+    - Fingerprints are stored as plain text (unencrypted) in database for consistency
+    - Encryption is used only for session storage, not database storage
     """
     if not browser_fingerprint or not browser_fingerprint.strip():
         return False, None
     
     browser_fingerprint = browser_fingerprint.strip()
     
-    # Try to get encryption manager, but handle errors gracefully
+    # Try to get encryption manager for backward compatibility (if old encrypted data exists)
+    enc_manager = None
     try:
         enc_manager = get_encryption_manager()
     except Exception:
         # If encryption manager fails to initialize, continue without it
-        # (for backward compatibility with unencrypted data)
-        enc_manager = None
+        pass
     
     # If user is provided, check if fingerprint matches that user
     if user:
@@ -457,36 +567,46 @@ def validate_browser_fingerprint(browser_fingerprint, user=None):
         if not employee_data or not employee_data.browser_fingerprint:
             return False, user
         
-        # Try to decrypt stored fingerprint for comparison
+        # Try to get stored fingerprint (handle both encrypted and unencrypted)
         stored_fingerprint = None
+        stored_value = employee_data.browser_fingerprint
+        
+        # First, try to decrypt (for backward compatibility with old encrypted data)
         if enc_manager:
             try:
-                stored_fingerprint = enc_manager.decrypt(employee_data.browser_fingerprint)
+                # Try to decrypt - if it fails, assume it's unencrypted
+                stored_fingerprint = enc_manager.decrypt(stored_value)
             except:
-                # If decryption fails, use direct value (for backward compatibility with unencrypted data)
-                stored_fingerprint = employee_data.browser_fingerprint
+                # Decryption failed - assume it's stored as plain text (new format)
+                stored_fingerprint = stored_value
         else:
             # No encryption manager available, use direct value
-            stored_fingerprint = employee_data.browser_fingerprint
+            stored_fingerprint = stored_value
         
         # Direct comparison (both should be MD5 now after reverting JavaScript to MD5)
+        # Normalize by stripping whitespace
+        stored_fingerprint = stored_fingerprint.strip() if stored_fingerprint else ''
         return stored_fingerprint == browser_fingerprint, user
     
     # If user is None, check if fingerprint exists for any user
-    # Need to check all encrypted fingerprints (can't query encrypted data directly)
+    # Need to check all fingerprints (can't query encrypted data directly)
     all_employee_data = EmployeeData.query.filter(EmployeeData.browser_fingerprint.isnot(None)).all()
     for emp_data in all_employee_data:
+        stored_value = emp_data.browser_fingerprint
         stored_fingerprint = None
+        
+        # Try to decrypt first (for backward compatibility), then fall back to plain text
         if enc_manager:
             try:
-                # Try to decrypt and compare
-                stored_fingerprint = enc_manager.decrypt(emp_data.browser_fingerprint)
+                stored_fingerprint = enc_manager.decrypt(stored_value)
             except:
-                # If decryption fails, use direct value (backward compatibility)
-                stored_fingerprint = emp_data.browser_fingerprint
+                # Decryption failed - assume it's stored as plain text
+                stored_fingerprint = stored_value
         else:
-            # No encryption manager, use direct value
-            stored_fingerprint = emp_data.browser_fingerprint
+            stored_fingerprint = stored_value
+        
+        # Normalize by stripping whitespace
+        stored_fingerprint = stored_fingerprint.strip() if stored_fingerprint else ''
         
         if stored_fingerprint == browser_fingerprint:
             user_found = User.query.get(emp_data.user_id)
@@ -843,10 +963,10 @@ def add_security_headers(response):
     # Adjust policy based on your application's needs
     csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
-        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         "img-src 'self' data: https:; "
-        "font-src 'self' https://cdnjs.cloudflare.com; "
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
         "connect-src 'self'; "
         "frame-ancestors 'none';"
     )
@@ -999,20 +1119,327 @@ def validate_fingerprint():
                 if emp_data and emp_data.browser_fingerprint:
                     hr_stored = emp_data.browser_fingerprint
             
-            # Return 404 instead of 403 to show "Not Found" page
+            # Return invalid fingerprint response (frontend will redirect to custom error page)
             return jsonify({
                 'valid': False, 
-                'error': 'Invalid fingerprint',
-                'debug': {
-                    'received': browser_fingerprint,
-                    'hr_stored': hr_stored,
-                    'match': hr_stored == browser_fingerprint if hr_stored else False
-                }
-            }), 404
+                'error': 'Invalid fingerprint'
+            }), 200
     
     except Exception as e:
         safe_error = get_safe_error_message(e)
         return jsonify({'valid': False, 'error': safe_error}), 500
+
+@app.route('/captcha_image')
+def captcha_image():
+    """Generate and return CAPTCHA image"""
+    try:
+        # Generate CAPTCHA text
+        captcha_text = generate_captcha_text()
+        
+        # Store in session for validation
+        session['captcha_answer'] = captcha_text
+        
+        # Create image
+        if PIL_AVAILABLE:
+            img_str = create_captcha_image(captcha_text)
+            if img_str:
+                return jsonify({
+                    'success': True,
+                    'image': f'data:image/png;base64,{img_str}'
+                })
+        
+        # Fallback: return text if PIL not available (less secure but functional)
+        return jsonify({
+            'success': True,
+            'text': captcha_text  # This is less secure, but works if PIL unavailable
+        })
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error generating CAPTCHA: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Failed to generate CAPTCHA'}), 500
+
+@app.route('/fingerprint_error')
+def fingerprint_error():
+    """Custom error page for browser fingerprint mismatch"""
+    return render_template('fingerprint_error.html')
+
+@app.route('/submit_complaint', methods=['POST'])
+@login_required
+def submit_complaint():
+    """Handle complaint about team submission and send email"""
+    try:
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        
+        # Get form data
+        employee_name = data.get('employeeName', current_user.employee_name or current_user.username)
+        employee_team = data.get('employeeTeam', current_user.department)
+        complaint_date = data.get('date', '')
+        person_name = data.get('personName', '')
+        complain_description = data.get('complainDescription', '')
+        username = current_user.username
+        
+        # Validate required fields
+        if not all([person_name, complain_description]):
+            return jsonify({'success': False, 'message': 'Please fill in all required fields.'}), 400
+        
+        # Format date for display
+        try:
+            if complaint_date:
+                formatted_date = datetime.strptime(complaint_date, '%Y-%m-%d').strftime('%B %d, %Y')
+            else:
+                formatted_date = datetime.now().strftime('%B %d, %Y')
+        except:
+            formatted_date = complaint_date or datetime.now().strftime('%B %d, %Y')
+        
+        # Send email to admin
+        try:
+            admin_email = 'ngt-auakua@ngtech.co.in'
+            msg = Message(
+                subject=f"Complaint About Team - {employee_name}",
+                recipients=[admin_email],
+                sender=app.config['MAIL_DEFAULT_SENDER']
+            )
+            
+            # Create email body
+            email_body = f"""Complaint About Team
+
+Employee Details:
+- Username: {username}
+- Employee Name: {employee_name}
+- Employee Team/Department: {employee_team}
+
+Complaint Details:
+- Date: {formatted_date}
+- Person Name: {person_name}
+- Complaint Description:
+{complain_description}
+
+Submitted At: {get_current_ist_time().strftime('%B %d, %Y at %I:%M %p IST')}
+
+Please review this complaint and take appropriate action.
+
+Best regards,
+NGTech System
+"""
+            
+            msg.body = email_body
+            mail.send(msg)
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Complaint submitted successfully! An email has been sent to the administrator.'
+            })
+            
+        except Exception as email_error:
+            # Log error but don't fail the request
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending complaint email: {email_error}", exc_info=True)
+            return jsonify({
+                'success': True, 
+                'message': 'Complaint submitted successfully! (Note: Email notification may have failed)'
+            })
+    
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error processing complaint: {e}", exc_info=True)
+        return jsonify({'success': False, 'message': 'An error occurred. Please try again later.'}), 500
+
+@app.route('/submit_leave_request', methods=['POST'])
+@login_required
+def submit_leave_request():
+    """Handle leave approval request submission and send email"""
+    try:
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        
+        # Get form data
+        employee_name = data.get('employeeName', current_user.employee_name or current_user.username)
+        request_date = data.get('requestDate', '')
+        leave_type = data.get('leaveType', '')
+        leave_from = data.get('leaveFrom', '')
+        leave_to = data.get('leaveTo', '')
+        reason = data.get('reason', '')
+        current_task = data.get('currentTask', '')
+        username = current_user.username
+        
+        # Validate required fields
+        if not all([leave_type, leave_from, leave_to, reason]):
+            return jsonify({'success': False, 'message': 'Please fill in all required fields.'}), 400
+        
+        # Validate emergency leave has current task
+        if leave_type == 'Emergency Leave' and not current_task:
+            return jsonify({'success': False, 'message': 'Please enter your current task for Emergency Leave.'}), 400
+        
+        # Format dates for display
+        try:
+            if leave_from:
+                from_date = datetime.strptime(leave_from, '%Y-%m-%d').strftime('%B %d, %Y')
+            else:
+                from_date = 'N/A'
+            
+            if leave_to:
+                to_date = datetime.strptime(leave_to, '%Y-%m-%d').strftime('%B %d, %Y')
+            else:
+                to_date = 'N/A'
+            
+            if request_date:
+                req_date = datetime.strptime(request_date, '%Y-%m-%d').strftime('%B %d, %Y')
+            else:
+                req_date = datetime.now().strftime('%B %d, %Y')
+        except:
+            from_date = leave_from
+            to_date = leave_to
+            req_date = request_date or datetime.now().strftime('%B %d, %Y')
+        
+        # Calculate number of days
+        try:
+            from_dt = datetime.strptime(leave_from, '%Y-%m-%d')
+            to_dt = datetime.strptime(leave_to, '%Y-%m-%d')
+            days_diff = (to_dt - from_dt).days + 1
+        except:
+            days_diff = 'N/A'
+        
+        # Send email to admin
+        try:
+            admin_email = 'ngt-auakua@ngtech.co.in'
+            msg = Message(
+                subject=f"Leave Approval Request - {employee_name}",
+                recipients=[admin_email],
+                sender=app.config['MAIL_DEFAULT_SENDER']
+            )
+            
+            # Create email body
+            email_body = f"""Leave Approval Request
+
+Employee Details:
+- Username: {username}
+- Employee Name: {employee_name}
+- Department: {current_user.department}
+
+Request Details:
+- Request Date: {req_date}
+- Leave Type: {leave_type}
+- Leave From: {from_date}
+- Leave To: {to_date}
+- Number of Days: {days_diff}
+- Reason: {reason}
+"""
+            
+            # Add current task if it's emergency leave
+            if leave_type == 'Emergency Leave' and current_task:
+                email_body += f"- Current Task: {current_task}\n"
+            
+            email_body += f"""
+Submitted At: {get_current_ist_time().strftime('%B %d, %Y at %I:%M %p IST')}
+
+Please review and approve this leave request.
+
+Best regards,
+NGTech System
+"""
+            
+            msg.body = email_body
+            mail.send(msg)
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Leave approval request submitted successfully! An email has been sent to the administrator.'
+            })
+            
+        except Exception as email_error:
+            # Log error but don't fail the request
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending leave request email: {email_error}", exc_info=True)
+            return jsonify({
+                'success': True, 
+                'message': 'Leave approval request submitted successfully! (Note: Email notification may have failed)'
+            })
+    
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error processing leave request: {e}", exc_info=True)
+        return jsonify({'success': False, 'message': 'An error occurred. Please try again later.'}), 500
+
+@app.route('/submit_fingerprint_request', methods=['POST'])
+def submit_fingerprint_request():
+    """Handle email submission for fingerprint mismatch - only send if email matches a user"""
+    try:
+        data = request.get_json()
+        email = data.get('email') if data else None
+        browser_fingerprint = data.get('browser_fingerprint') if data else None
+        captcha_input = data.get('captcha', '').strip() if data else ''
+        
+        # Validate CAPTCHA
+        if not validate_captcha(captcha_input):
+            return jsonify({'success': False, 'message': 'Invalid CAPTCHA. Please try again.'}), 400
+        
+        if not email:
+            return jsonify({'success': False, 'message': 'Email address is required.'}), 400
+        
+        # Validate email format
+        import re
+        email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+        if not re.match(email_pattern, email):
+            return jsonify({'success': False, 'message': 'Invalid email format.'}), 400
+        
+        # Check if email matches any user in the database
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            # Email doesn't match any user - don't send email, but return success message
+            return jsonify({
+                'success': True, 
+                'message': 'Thank you for your request. If your email is registered, we will review it shortly.'
+            })
+        
+        # Email matches a user - send email to admin
+        try:
+            username = user.username
+            employee_name = user.employee_name or username
+            
+            # Send email to admin
+            admin_email = 'ngt-auakua@ngtech.co.in'
+            msg = Message(
+                subject="Browser Fingerprint Mismatch Request",
+                recipients=[admin_email],
+                sender=app.config['MAIL_DEFAULT_SENDER']
+            )
+            
+            msg.body = f"""A user has requested access due to browser fingerprint mismatch.
+
+User Details:
+- Username: {username}
+- Employee Name: {employee_name}
+- Email: {email}
+- Department: {user.department}
+
+Browser Fingerprint: {browser_fingerprint}
+
+Timestamp: {get_current_ist_time().strftime('%Y-%m-%d %H:%M:%S IST')}
+
+Please review this request and update the user's browser fingerprint if approved.
+"""
+            
+            mail.send(msg)
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Your request has been submitted successfully. We will review it and contact you shortly.'
+            })
+            
+        except Exception as email_error:
+            # Log error but don't expose it to user
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending fingerprint request email: {email_error}", exc_info=True)
+            return jsonify({
+                'success': True, 
+                'message': 'Your request has been received. We will review it shortly.'
+            })
+    
+    except Exception as e:
+        safe_error = get_safe_error_message(e)
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error processing fingerprint request: {e}", exc_info=True)
+        return jsonify({'success': False, 'message': 'An error occurred. Please try again later.'}), 500
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1036,6 +1463,12 @@ def login():
         # Validate CSRF token
         if not validate_csrf_token():
             flash('Invalid security token. Please try again.', 'error')
+            return redirect(url_for('login'))
+        
+        # Validate CAPTCHA
+        captcha_input = request.form.get('captcha', '').strip()
+        if not validate_captcha(captcha_input):
+            flash('Invalid CAPTCHA. Please try again.', 'error')
             return redirect(url_for('login'))
         
         username = request.form.get('username')
@@ -2190,10 +2623,11 @@ def create_user():
             experience_str = experience
         
         # Create employee data with form values
-        # Encrypt browser fingerprint before storing
-        enc_manager = get_encryption_manager()
+        # Store browser fingerprint as plain text (unencrypted) in database
+        # This ensures fingerprints work consistently even if encryption key changes
+        # Encryption is used only for session storage, not database storage
         browser_fp = request.form.get('browser_fingerprint')
-        encrypted_fingerprint = enc_manager.encrypt(browser_fp) if browser_fp else None
+        fingerprint_value = browser_fp.strip() if browser_fp else None
         
         employee_data = EmployeeData(
             user_id=new_user.id,
@@ -2203,7 +2637,7 @@ def create_user():
             certifications=request.form.get('certifications'),
             blood_group=request.form.get('blood_group'),
             contact_number=request.form.get('contact'),
-            browser_fingerprint=encrypted_fingerprint
+            browser_fingerprint=fingerprint_value
         )
         
         # Handle date of birth
@@ -2321,7 +2755,9 @@ HR Department"""
 @app.route('/api/get_users_list', methods=['GET'])
 @login_required
 def get_users_list():
-    """Get list of all active (non-deleted) users for the update ID and delete ID modals"""
+    """Get list of all active (non-deleted) users
+    Note: For Update/Delete ID modals, use /api/get_users_list_filtered instead
+    """
     if current_user.department != "HR":
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
@@ -2345,6 +2781,48 @@ def get_users_list():
             # Only include users that are not deleted and are active
             if not is_deleted and not is_inactive:
                 active_users.append({'id': user.id, 'employee_name': user.employee_name})
+        
+        return jsonify({'success': True, 'users': active_users})
+    except Exception as e:
+        safe_error = get_safe_error_message(e)
+        return jsonify({'success': False, 'message': safe_error}), 500
+
+@app.route('/api/get_users_list_filtered', methods=['GET'])
+@login_required
+def get_users_list_filtered():
+    """Get list of active users for Update/Delete ID modals
+    Excludes Admin users - only shows GRC, VAPT, Audit, and HR employees
+    """
+    if current_user.department != "HR":
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        # Allowed departments (excluding Admin)
+        allowed_departments = ['GRC', 'VAPT', 'Audit', 'HR']
+        
+        # Get all users and filter out deleted ones and Admin department
+        all_users = User.query.all()
+        
+        # Filter out deleted users (where deleted_at is not None or is_active is False)
+        # Also exclude Admin department - only show GRC, VAPT, Audit, and HR
+        active_users = []
+        for user in all_users:
+            # Check if user is deleted
+            is_deleted = False
+            if hasattr(user, 'deleted_at') and user.deleted_at:
+                is_deleted = True
+            
+            # Check if user is inactive
+            is_inactive = False
+            if user.status and not user.status.is_active:
+                is_inactive = True
+            
+            # Check if user is in allowed departments (exclude Admin)
+            is_allowed_department = user.department in allowed_departments
+            
+            # Only include users that are not deleted, are active, and are in allowed departments
+            if not is_deleted and not is_inactive and is_allowed_department:
+                active_users.append({'id': user.id, 'employee_name': user.employee_name, 'department': user.department})
         
         return jsonify({'success': True, 'users': active_users})
     except Exception as e:
@@ -2692,10 +3170,11 @@ def update_user_all():
         if 'contact' in data:
             employee_data.contact_number = data['contact'].strip()
         if 'browser_fingerprint' in data:
-            # Encrypt browser fingerprint before storing
-            enc_manager = get_encryption_manager()
+            # Store browser fingerprint as plain text (unencrypted) in database
+            # This ensures fingerprints work consistently even if encryption key changes
+            # Encryption is used only for session storage, not database storage
             browser_fp = data['browser_fingerprint'].strip()
-            employee_data.browser_fingerprint = enc_manager.encrypt(browser_fp) if browser_fp else None
+            employee_data.browser_fingerprint = browser_fp if browser_fp else None
         
         # Log the activity
         activity = LoginActivity(
@@ -5180,6 +5659,26 @@ def handle_request_entity_too_large(e):
     safe_referrer = sanitize_referrer(request.referrer)
     redirect_url = safe_referrer if safe_referrer else url_for('audit_dashboard')
     return redirect(redirect_url), 413
+
+# Initialize daily workplan email scheduler
+try:
+    from daily_workplan_email_scheduler import start_scheduler
+    email_scheduler = start_scheduler()
+    # Store scheduler in app config for cleanup on shutdown
+    app.config['EMAIL_SCHEDULER'] = email_scheduler
+    
+    # Register shutdown handler to stop scheduler gracefully
+    import atexit
+    def shutdown_scheduler():
+        if email_scheduler and email_scheduler.running:
+            email_scheduler.shutdown()
+            logging.info("Email scheduler stopped")
+            print("Email scheduler stopped")
+    atexit.register(shutdown_scheduler)
+    
+except Exception as e:
+    logging.error(f"Failed to start email scheduler: {str(e)}")
+    print(f"⚠️ Warning: Failed to start email scheduler: {str(e)}")
 
 if __name__ == '__main__':
     # Run migrations on startup

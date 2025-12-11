@@ -390,6 +390,11 @@ def submit_update_work():
         if check_existing_entry(employee_name, date_str):
             return jsonify({'success': False, 'error': 'You have already updated your work for today'}), 400
         
+        # Check if current time is between 6 PM and 11 PM
+        current_hour = datetime.now().hour
+        if current_hour < 18 or current_hour >= 23:
+            return jsonify({'success': False, 'error': 'Update Today\'s Work is only available between 6 PM and 11 PM.'}), 400
+        
         # Prepare tasks data
         tasks_data = []
         for i in range(len(tasks)):

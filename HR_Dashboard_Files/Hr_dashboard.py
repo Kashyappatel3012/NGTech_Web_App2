@@ -1860,16 +1860,27 @@ def send_employee_mail():
         if not content:
             return jsonify({'success': False, 'message': 'Content is required'}), 400
         
-        # Get all employee email addresses - use current_app context
+        # Get all active employee email addresses (exclude deleted and inactive) - use current_app context
         try:
             db = current_app.extensions['sqlalchemy']
-            employees = db.session.query(User).all()
+            from app import UserStatus
+            # Get all users first, then filter for active ones
+            all_users = db.session.query(User).all()
         except (KeyError, AttributeError):
-            from app import db
-            employees = User.query.all()
+            from app import db, UserStatus
+            # Get all users first, then filter for active ones
+            all_users = db.session.query(User).all()
         
-        if not employees:
-            return jsonify({'success': False, 'message': 'No employee email addresses found.'}), 400
+        # Filter for active employees only:
+        # 1. Not deleted (deleted_at is None)
+        # 2. Active status (status doesn't exist OR status.is_active is True)
+        active_employees = [
+            emp for emp in all_users 
+            if not emp.deleted_at and (not emp.status or emp.status.is_active)
+        ]
+        
+        if not active_employees:
+            return jsonify({'success': False, 'message': 'No active employee email addresses found.'}), 400
         
         # Store temporary attachment files
         temp_files = []
@@ -1891,8 +1902,8 @@ def send_employee_mail():
                         temp_files.append(temp_path)
                 temp_files.append(temp_dir)  # Add directory to cleanup list
             
-            # Send email to each employee separately
-            for employee in employees:
+            # Send email to each active employee separately
+            for employee in active_employees:
                 try:
                     msg = Message(
                         subject=subject,
@@ -1997,12 +2008,12 @@ def download_catalog(catalog_type):
 @hr_dashboard_bp.route('/hr/get_all_employees', methods=['GET'])
 @login_required
 def get_all_employees():
-    """Get all employees for performance rating"""
+    """Get all active (non-deleted) employees for performance rating"""
     if current_user.department != "HR":
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     try:
-        from app import User
+        from app import User, UserStatus
         try:
             db = current_app.extensions['sqlalchemy']
             users = db.session.query(User).all()
@@ -2012,12 +2023,27 @@ def get_all_employees():
         
         employees = []
         for user in users:
-            employees.append({
-                'id': user.id,
-                'username': user.username,
-                'employee_name': user.employee_name,
-                'email': user.email
-            })
+            # Check if user is deleted
+            is_deleted = False
+            if hasattr(user, 'deleted_at') and user.deleted_at:
+                is_deleted = True
+            
+            # Check if user is inactive
+            is_inactive = False
+            if user.status and not user.status.is_active:
+                is_inactive = True
+            
+            # Only include users that are not deleted and are active
+            if not is_deleted and not is_inactive:
+                employees.append({
+                    'id': user.id,
+                    'username': user.username,
+                    'employee_name': user.employee_name,
+                    'email': user.email
+                })
+        
+        # Sort by employee name for better UX
+        employees.sort(key=lambda x: x.get('employee_name', '') or x.get('username', ''))
         
         return jsonify({'success': True, 'employees': employees})
     except Exception as e:

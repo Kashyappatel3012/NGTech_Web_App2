@@ -2855,6 +2855,50 @@
             }
         }
         
+        // Function to check if current time is between 4 AM and 12 PM
+        function isWorkPlanTimeAllowed() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            // Check if time is between 4 AM (4) and 12 PM (12)
+            return currentHour >= 4 && currentHour < 12;
+        }
+        
+        // Function to enable/disable work plan card based on time
+        function updateWorkPlanCardTimeRestriction() {
+            const workCard = document.getElementById('workPlanCard');
+            if (!workCard) return;
+            
+            // Don't modify if already submitted (check if onclick is null or has work-plan-submitted class)
+            if (workCard.onclick === null || workCard.classList.contains('work-plan-submitted')) {
+                return;
+            }
+            
+            const isAllowed = isWorkPlanTimeAllowed();
+            
+            if (!isAllowed) {
+                // Disable the button outside allowed time
+                workCard.style.cursor = 'not-allowed';
+                workCard.style.opacity = '0.6';
+                const originalOnclick = workCard.onclick;
+                workCard.onclick = function() {
+                    alert('Submit Today\'s Work Plan is only available between 4 AM and 12 PM.');
+                };
+                const icon = workCard.querySelector('i');
+                const heading = workCard.querySelector('h3');
+                if (icon) icon.style.opacity = '0.5';
+                if (heading) heading.style.color = '#888';
+            } else {
+                // Enable the button during allowed time
+                workCard.style.cursor = 'pointer';
+                workCard.style.opacity = '1';
+                workCard.onclick = openWorkPlanModal;
+                const icon = workCard.querySelector('i');
+                const heading = workCard.querySelector('h3');
+                if (icon) icon.style.opacity = '1';
+                if (heading) heading.style.color = '';
+            }
+        }
+        
         // Check work plan status on page load
         document.addEventListener('DOMContentLoaded', function() {
             // Check if work plan has already been submitted today
@@ -2888,10 +2932,65 @@
                                 heading.style.color = '#888';
                             }
                         }
+                    } else {
+                        // If not submitted, check time restriction
+                        updateWorkPlanCardTimeRestriction();
                     }
                 })
                 .catch(error => console.error('Error checking work plan status:', error));
+            } else {
+                // If no employee name, still check time restriction
+                updateWorkPlanCardTimeRestriction();
             }
+            
+            // Check time restriction periodically (every minute)
+            setInterval(updateWorkPlanCardTimeRestriction, 60000);
+            
+            // Function to check if current time is between 6 PM and 11 PM
+            function isUpdateWorkTimeAllowed() {
+                const now = new Date();
+                const currentHour = now.getHours();
+                // Check if time is between 6 PM (18) and 11 PM (23)
+                return currentHour >= 18 && currentHour < 23;
+            }
+            
+            // Function to enable/disable update work card based on time
+            function updateWorkCardTimeRestriction() {
+                const workCard = document.getElementById('updateWorkCard');
+                if (!workCard) return;
+                
+                // Don't modify if already submitted (check if onclick is null or has update-work-submitted class)
+                if (workCard.onclick === null || workCard.classList.contains('update-work-submitted')) {
+                    return;
+                }
+                
+                const isAllowed = isUpdateWorkTimeAllowed();
+                
+                if (!isAllowed) {
+                    // Disable the button outside allowed time
+                    workCard.style.cursor = 'not-allowed';
+                    workCard.style.opacity = '0.6';
+                    workCard.onclick = function() {
+                        alert('Update Today\'s Work is only available between 6 PM and 11 PM.');
+                    };
+                    const icon = workCard.querySelector('i');
+                    const heading = workCard.querySelector('h3');
+                    if (icon) icon.style.opacity = '0.5';
+                    if (heading) heading.style.color = '#888';
+                } else {
+                    // Enable the button during allowed time
+                    workCard.style.cursor = 'pointer';
+                    workCard.style.opacity = '1';
+                    workCard.onclick = openUpdateWorkModal;
+                    const icon = workCard.querySelector('i');
+                    const heading = workCard.querySelector('h3');
+                    if (icon) icon.style.opacity = '1';
+                    if (heading) heading.style.color = '';
+                }
+            }
+            
+            // Apply time restriction immediately on page load (before async status check)
+            updateWorkCardTimeRestriction();
             
             // Add Task functionality
             const addTaskBtn = document.getElementById('addWorkPlanTaskBtn');
@@ -3118,10 +3217,19 @@
                                 heading.style.color = '#888';
                             }
                         }
+                    } else {
+                        // If not submitted, check time restriction
+                        updateWorkCardTimeRestriction();
                     }
                 })
                 .catch(error => console.error('Error checking update work status:', error));
+            } else {
+                // If no employee name, still check time restriction
+                updateWorkCardTimeRestriction();
             }
+            
+            // Check time restriction periodically (every minute)
+            setInterval(updateWorkCardTimeRestriction, 60000);
             
             // Check sprint plan status on page load
             const sprintEmployeeName = document.getElementById('sprintPlanEmployeeNameForCheck')?.value || '';
@@ -3744,8 +3852,48 @@
                 return;
             }
             
-            alert('Leave approval request submitted successfully!');
-            closeLeaveApprovalModal();
+            // Collect form data
+            const formData = {
+                employeeName: document.getElementById('leaveEmployeeName').value,
+                requestDate: document.getElementById('leaveRequestDate').value,
+                leaveType: leaveType,
+                leaveFrom: document.getElementById('leaveFrom').value,
+                leaveTo: document.getElementById('leaveTo').value,
+                reason: document.getElementById('leaveReason').value,
+                currentTask: document.getElementById('leaveCurrentTask').value || ''
+            };
+            
+            // Disable submit button to prevent double submission
+            const submitBtn = form.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Send request to backend
+            fetch('/submit_leave_request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || 'Leave approval request submitted successfully!');
+                    closeLeaveApprovalModal();
+                } else {
+                    alert(data.message || 'Failed to submit leave request. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting leave request:', error);
+                alert('An error occurred while submitting your request. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
         }
         
         // Complaint Modal Functions
@@ -3771,8 +3919,46 @@
                 return;
             }
             
-            alert('Complaint submitted successfully!');
-            closeComplaintModal();
+            // Collect form data
+            const formData = {
+                employeeName: document.getElementById('complaintEmployeeName').value,
+                employeeTeam: document.getElementById('complaintEmployeeTeam').value,
+                date: document.getElementById('complaintDate').value,
+                personName: document.getElementById('complaintPersonName').value,
+                complainDescription: document.getElementById('complaintDescription').value
+            };
+            
+            // Disable submit button to prevent double submission
+            const submitBtn = form.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Send request to backend
+            fetch('/submit_complaint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || 'Complaint submitted successfully!');
+                    closeComplaintModal();
+                } else {
+                    alert(data.message || 'Failed to submit complaint. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting complaint:', error);
+                alert('An error occurred while submitting your complaint. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
         }
 
         // Close modal when clicking outside
@@ -4111,7 +4297,8 @@
         }
 
         function loadEmployeeList() {
-            fetch('/api/get_users_list')
+            // Use filtered endpoint that excludes Admin users
+            fetch('/api/get_users_list_filtered')
                 .then(response => response.json())
                 .then(data => {
                     const select = document.getElementById('employeeSelect');
@@ -4523,7 +4710,8 @@
         }
 
         function loadDeleteEmployeeList() {
-            fetch('/api/get_users_list')
+            // Use filtered endpoint that excludes Admin users
+            fetch('/api/get_users_list_filtered')
                 .then(response => response.json())
                 .then(data => {
                     const select = document.getElementById('deleteEmployeeSelect');

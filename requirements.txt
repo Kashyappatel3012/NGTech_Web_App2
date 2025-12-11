@@ -22,4 +22,15 @@ cryptography>=41.0.0  # For AES-256-GCM encryption
 # Additional dependencies (add as needed based on your project)
 # These are commonly used in Flask applications
 python-dotenv>=1.0.0  # For environment variable management (optional but recommended)
+Pillow>=10.0.0  # For CAPTCHA image generation
+APScheduler>=3.10.0  # For scheduled tasks
+
+# Office file format support (NO Microsoft Office installation required)
+openpyxl>=3.1.0  # Excel file operations (.xlsx) - used throughout the application
+python-docx>=1.1.0  # Word document operations (.docx) - used for report generation
+pandas>=2.0.0  # Data manipulation - used with Excel files and Word reports
+lxml>=4.9.0  # XML processing - required by python-docx
+
+# Production server
+gunicorn>=21.2.0  # Production WSGI server for PAAS deployment
 

@@ -658,82 +658,112 @@ def get_logs_from_excel(start_date=None, end_date=None, limit=None):
         for excel_file in excel_files:
             file_path = os.path.join(LOGS_DIR, excel_file)
             
-            try:
-                # Check if file is accessible and not empty
-                if os.path.getsize(file_path) == 0:
-                    print(f"Skipping empty file: {excel_file}")
-                    continue
-                
-                # Try to load workbook with error handling
+            # Get file lock for reading (prevents conflicts with concurrent writes)
+            file_lock = get_file_lock(file_path)
+            
+            # Acquire lock before reading the file
+            with file_lock:
                 try:
-                    wb = load_workbook(file_path, read_only=True, data_only=True, keep_links=False)
-                except (EOFError, IOError, OSError) as load_error:
-                    print(f"Error loading Excel file {excel_file} (may be corrupted): {load_error}")
-                    # Try to create backup and skip this file
-                    try:
-                        backup_filename = f"{file_path}.corrupted_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                        shutil.copy2(file_path, backup_filename)
-                        print(f"Created backup of corrupted file: {backup_filename}")
-                    except:
-                        pass
-                    continue
-                
-                # Iterate through all worksheets
-                for sheet_name in wb.sheetnames:
-                    try:
-                        ws = wb[sheet_name]
-                        
-                        # Skip header row
-                        for row in ws.iter_rows(min_row=2, values_only=True):
-                            if len(row) < 1 or not row[0]:
-                                continue
-                            
-                            try:
-                                log_timestamp = datetime.strptime(str(row[0]), '%Y-%m-%d %H:%M:%S')
-                                
-                                # Filter by date range
-                                if start_date and log_timestamp < start_date:
-                                    continue
-                                if end_date and log_timestamp > end_date:
-                                    continue
-                                
-                                log_entry = {
-                                    'timestamp': row[0],
-                                    'user_id': row[1] if len(row) > 1 else '',
-                                    'username': row[2] if len(row) > 2 else '',
-                                    'employee_name': row[3] if len(row) > 3 else '',
-                                    'department': row[4] if len(row) > 4 else '',
-                                    'ip_address': row[5] if len(row) > 5 else '',
-                                    'activity_type': row[6] if len(row) > 6 else '',
-                                    'activity_description': row[7] if len(row) > 7 else '',
-                                    'request_method': row[8] if len(row) > 8 else '',
-                                    'request_url': row[9] if len(row) > 9 else '',
-                                    'request_data': row[10] if len(row) > 10 else '',
-                                    'response_status': row[11] if len(row) > 11 else '',
-                                    'session_id': row[12] if len(row) > 12 else '',
-                                    'user_agent': row[13] if len(row) > 13 else '',
-                                    'additional_details': row[14] if len(row) > 14 else ''
-                                }
-                                
-                                logs.append(log_entry)
-                                
-                                # Check limit
-                                if limit and len(logs) >= limit:
-                                    wb.close()
-                                    return logs
-                                    
-                            except Exception as e:
-                                print(f"Error parsing log row: {e}")
-                                continue
-                    except Exception as sheet_error:
-                        print(f"Error reading worksheet {sheet_name} from {excel_file}: {sheet_error}")
+                    # Check if file is accessible and not empty
+                    if os.path.getsize(file_path) == 0:
+                        print(f"Skipping empty file: {excel_file}")
                         continue
-                
-                wb.close()
-                
-            except Exception as e:
-                print(f"Error reading Excel file {excel_file}: {e}")
-                continue
+                    
+                    # Try to load workbook with error handling and retry logic
+                    max_read_retries = 3
+                    wb = None
+                    for read_attempt in range(max_read_retries):
+                        try:
+                            wb = load_workbook(file_path, read_only=True, data_only=True, keep_links=False)
+                            break  # Success, exit retry loop
+                        except (EOFError, IOError, OSError, PermissionError) as load_error:
+                            error_msg = str(load_error).lower()
+                            print(f"Error loading Excel file {excel_file} (attempt {read_attempt + 1}/{max_read_retries}): {load_error}")
+                            
+                            # Check if file is locked by another process
+                            if 'being used by another process' in error_msg or 'permission denied' in error_msg:
+                                if read_attempt < max_read_retries - 1:
+                                    # Wait longer for locked files
+                                    wait_time = 0.5 * (2 ** read_attempt)
+                                    print(f"File is locked, waiting {wait_time:.2f} seconds before retry...")
+                                    time.sleep(wait_time)
+                                    continue
+                            
+                            if read_attempt < max_read_retries - 1:
+                                # Wait a bit before retrying (exponential backoff)
+                                time.sleep(0.2 * (2 ** read_attempt))
+                                continue
+                            else:
+                                # Last attempt failed - file may be corrupted or locked
+                                print(f"Failed to load workbook after {max_read_retries} attempts. Skipping file.")
+                                # Try to create backup and skip this file
+                                try:
+                                    backup_filename = f"{file_path}.corrupted_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                                    shutil.copy2(file_path, backup_filename)
+                                    print(f"Created backup of corrupted file: {backup_filename}")
+                                except:
+                                    pass
+                                break  # Skip to next file
+                    
+                    if wb is None:
+                        continue  # Skip this file if we couldn't load it
+                    
+                    # Iterate through all worksheets
+                    for sheet_name in wb.sheetnames:
+                        try:
+                            ws = wb[sheet_name]
+                            
+                            # Skip header row
+                            for row in ws.iter_rows(min_row=2, values_only=True):
+                                if len(row) < 1 or not row[0]:
+                                    continue
+                                
+                                try:
+                                    log_timestamp = datetime.strptime(str(row[0]), '%Y-%m-%d %H:%M:%S')
+                                    
+                                    # Filter by date range
+                                    if start_date and log_timestamp < start_date:
+                                        continue
+                                    if end_date and log_timestamp > end_date:
+                                        continue
+                                    
+                                    log_entry = {
+                                        'timestamp': row[0],
+                                        'user_id': row[1] if len(row) > 1 else '',
+                                        'username': row[2] if len(row) > 2 else '',
+                                        'employee_name': row[3] if len(row) > 3 else '',
+                                        'department': row[4] if len(row) > 4 else '',
+                                        'ip_address': row[5] if len(row) > 5 else '',
+                                        'activity_type': row[6] if len(row) > 6 else '',
+                                        'activity_description': row[7] if len(row) > 7 else '',
+                                        'request_method': row[8] if len(row) > 8 else '',
+                                        'request_url': row[9] if len(row) > 9 else '',
+                                        'request_data': row[10] if len(row) > 10 else '',
+                                        'response_status': row[11] if len(row) > 11 else '',
+                                        'session_id': row[12] if len(row) > 12 else '',
+                                        'user_agent': row[13] if len(row) > 13 else '',
+                                        'additional_details': row[14] if len(row) > 14 else ''
+                                    }
+                                    
+                                    logs.append(log_entry)
+                                    
+                                    # Check limit
+                                    if limit and len(logs) >= limit:
+                                        wb.close()
+                                        return logs
+                                        
+                                except Exception as e:
+                                    print(f"Error parsing log row: {e}")
+                                    continue
+                        except Exception as sheet_error:
+                            print(f"Error reading worksheet {sheet_name} from {excel_file}: {sheet_error}")
+                            continue
+                    
+                    wb.close()
+                    
+                except Exception as e:
+                    print(f"Error reading Excel file {excel_file}: {e}")
+                    continue
         
         return logs
         

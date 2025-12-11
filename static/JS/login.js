@@ -140,19 +140,11 @@
             // Combine all components and create hash
             const fingerprintString = components.join('|');
             
-            // Generate MD5 hash (using MD5 for backward compatibility with existing database)
-            // Note: MD5 is cryptographically weak but needed for compatibility with existing fingerprints
-            // TODO: Migrate all fingerprints to SHA-256 and then switch to SHA-256
+            // Generate MD5 hash (same as main application for consistency)
             if (typeof CryptoJS !== 'undefined') {
                 return CryptoJS.MD5(fingerprintString).toString();
             } else {
-                // Fallback: Use Web Crypto API if available (more secure)
-                if (window.crypto && window.crypto.subtle) {
-                    // Use async Web Crypto API for SHA-256
-                    // Note: This is async, so we'll use a synchronous fallback
-                    // In practice, the CryptoJS library should be available
-                }
-                // Fallback: simple hash if CryptoJS is not available (less secure but functional)
+                // Fallback: simple hash if CryptoJS is not available
                 let hash = 0;
                 for (let i = 0; i < fingerprintString.length; i++) {
                     const char = fingerprintString.charCodeAt(i);
@@ -178,15 +170,65 @@
             }
         }
         
+        // Load CAPTCHA
+        function loadCaptcha() {
+            fetch('/captcha_image')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const captchaImage = document.getElementById('captchaImage');
+                        const captchaText = document.getElementById('captchaText');
+                        
+                        if (data.image) {
+                            // Show image CAPTCHA
+                            captchaImage.src = data.image;
+                            captchaImage.style.display = 'block';
+                            captchaText.style.display = 'none';
+                        } else if (data.text) {
+                            // Fallback: show text CAPTCHA
+                            captchaText.textContent = data.text;
+                            captchaText.style.display = 'block';
+                            captchaImage.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading CAPTCHA:', error);
+                });
+        }
+
+        // Refresh CAPTCHA
+        const refreshCaptchaBtn = document.getElementById('refreshCaptcha');
+        if (refreshCaptchaBtn) {
+            refreshCaptchaBtn.addEventListener('click', function() {
+                loadCaptcha();
+                // Clear CAPTCHA input
+                const captchaInput = document.getElementById('captcha');
+                if (captchaInput) {
+                    captchaInput.value = '';
+                }
+            });
+        }
+
+        // Auto-uppercase CAPTCHA input
+        const captchaInput = document.getElementById('captcha');
+        if (captchaInput) {
+            captchaInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
         // Generate and display fingerprint when page loads
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 displayBrowserFingerprint();
                 checkBrowserFingerprintAccess();
+                loadCaptcha();
             });
         } else {
             displayBrowserFingerprint();
             checkBrowserFingerprintAccess();
+            loadCaptcha();
         }
         
         // Check browser fingerprint access on page load via AJAX (not URL)
@@ -209,8 +251,8 @@
                 })
                 .then(response => {
                     if (response.status === 404 || response.status === 403) {
-                        // Invalid fingerprint - redirect to 404 page immediately
-                        window.location.replace('/nonexistent_route_404');
+                        // Invalid fingerprint - redirect to custom error page immediately
+                        window.location.replace('/fingerprint_error');
                         return;
                     }
                     return response.json();
@@ -233,18 +275,18 @@
                         // Store in sessionStorage for verify_otp page
                         sessionStorage.setItem('browser_fingerprint', fingerprint);
                     } else {
-                        // Fingerprint is invalid - redirect to 404 page
-                        window.location.replace('/nonexistent_route_404');
+                        // Fingerprint is invalid - redirect to custom error page
+                        window.location.replace('/fingerprint_error');
                     }
                 })
                 .catch(error => {
                     console.error('Error validating fingerprint:', error);
-                    // On error, redirect to 404 page
-                    window.location.replace('/nonexistent_route_404');
+                    // On error, redirect to custom error page
+                    window.location.replace('/fingerprint_error');
                 });
             } else {
-                // If fingerprint cannot be generated, redirect to 404 page
-                window.location.replace('/nonexistent_route_404');
+                // If fingerprint cannot be generated, redirect to custom error page
+                window.location.replace('/fingerprint_error');
             }
         }
         

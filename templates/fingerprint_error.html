@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Restricted - Browser Fingerprint Mismatch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            color: #ff4757;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 5px;
+            color: #856404;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .subscribe-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .subscribe-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .subscribe-button:active {
+            transform: translateY(0);
+        }
+
+        .subscribe-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .captcha-image-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .refresh-captcha-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">🔔</div>
+        <h1>Subscribe</h1>
+        <p class="subtitle">
+            Subscribe to get latest information about Cybersecurity News and Updates.
+        </p>
+
+        <div class="error-message">
+            <strong>Stay ahead of cyber threats!</strong><br>
+            Subscribe now to get the latest Cybersecurity news, updates, and expert insights—straight to your inbox.<br>
+Don’t miss any critical security alerts. Join now!
+        </div>
+
+        <form id="emailForm">
+            <div class="form-group">
+                <label for="email">Enter your email address for registration:</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="your.email@example.com" 
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="captcha">Enter CAPTCHA:</label>
+                <div class="captcha-container">
+                    <div class="captcha-image-container">
+                        <img id="captchaImage" src="" alt="CAPTCHA" style="display: none; height: 40px; border-radius: 5px;">
+                        <span id="captchaText" style="display: none; font-size: 20px; font-weight: bold; letter-spacing: 3px; padding: 5px 10px; background: rgba(102, 126, 234, 0.1); border-radius: 5px; font-family: 'Courier New', monospace;"></span>
+                        <button type="button" id="refreshCaptcha" class="refresh-captcha-btn" title="Refresh CAPTCHA" style="background: transparent; border: 1px solid #667eea; color: #667eea; padding: 8px 10px; border-radius: 5px; cursor: pointer; transition: all 0.3s;">
+                            <span style="font-size: 14px;">↻</span>
+                        </button>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="captcha" 
+                        name="captcha" 
+                        placeholder="Enter CAPTCHA" 
+                        required 
+                        autocomplete="off" 
+                        maxlength="4"
+                        style="flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-transform: uppercase;"
+                    >
+                </div>
+            </div>
+            
+            <button type="submit" class="subscribe-button" id="subscribeBtn">
+                Subscribe
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            Processing your request...
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <!-- CryptoJS Library for MD5 hashing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <script>
+        // Browser Fingerprinting Function (same as login page)
+        function getBrowserFingerprint() {
+            const components = [];
+            
+            // User Agent
+            components.push(navigator.userAgent || '');
+            
+            // Screen Resolution
+            components.push(`${screen.width}x${screen.height}x${screen.colorDepth}`);
+            
+            // Timezone
+            components.push(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+            components.push(new Date().getTimezoneOffset().toString());
+            
+            // Language
+            components.push(navigator.language || '');
+            components.push((navigator.languages || []).join(','));
+            
+            // Platform
+            components.push(navigator.platform || '');
+            
+            // Hardware Concurrency
+            components.push(navigator.hardwareConcurrency?.toString() || '');
+            
+            // Device Memory (if available)
+            components.push(navigator.deviceMemory?.toString() || '');
+            
+            // Canvas Fingerprint
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 200;
+                canvas.height = 50;
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = '#069';
+                ctx.fillText('Browser fingerprint', 2, 15);
+                ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                ctx.fillText('Browser fingerprint', 4, 17);
+                components.push(canvas.toDataURL());
+            } catch (e) {
+                components.push('canvas-error');
+            }
+            
+            // WebGL Fingerprint
+            try {
+                const gl = document.createElement('canvas').getContext('webgl') || 
+                          document.createElement('canvas').getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        components.push(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL));
+                        components.push(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL));
+                    }
+                }
+            } catch (e) {
+                components.push('webgl-error');
+            }
+            
+            // Audio Context Fingerprint
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const analyser = audioContext.createAnalyser();
+                const gainNode = audioContext.createGain();
+                const scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                gainNode.gain.value = 0;
+                oscillator.connect(analyser);
+                analyser.connect(scriptProcessor);
+                scriptProcessor.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start(0);
+                
+                const fingerprint = analyser.frequencyData.length.toString();
+                oscillator.stop();
+                audioContext.close();
+                components.push(fingerprint);
+            } catch (e) {
+                components.push('audio-error');
+            }
+            
+            // Combine all components and create hash
+            const fingerprintString = components.join('|');
+            
+            // Generate MD5 hash (same as main application for consistency)
+            if (typeof CryptoJS !== 'undefined') {
+                return CryptoJS.MD5(fingerprintString).toString();
+            } else {
+                // Fallback: simple hash if CryptoJS is not available
+                let hash = 0;
+                for (let i = 0; i < fingerprintString.length; i++) {
+                    const char = fingerprintString.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return Math.abs(hash).toString(16).padStart(32, '0');
+            }
+        }
+
+        // Load CAPTCHA
+        function loadCaptcha() {
+            fetch('/captcha_image')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const captchaImage = document.getElementById('captchaImage');
+                        const captchaText = document.getElementById('captchaText');
+                        
+                        if (data.image) {
+                            // Show image CAPTCHA
+                            captchaImage.src = data.image;
+                            captchaImage.style.display = 'block';
+                            captchaText.style.display = 'none';
+                        } else if (data.text) {
+                            // Fallback: show text CAPTCHA
+                            captchaText.textContent = data.text;
+                            captchaText.style.display = 'block';
+                            captchaImage.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading CAPTCHA:', error);
+                });
+        }
+
+        // Refresh CAPTCHA
+        const refreshCaptchaBtn = document.getElementById('refreshCaptcha');
+        if (refreshCaptchaBtn) {
+            refreshCaptchaBtn.addEventListener('click', function() {
+                loadCaptcha();
+                // Clear CAPTCHA input
+                const captchaInput = document.getElementById('captcha');
+                if (captchaInput) {
+                    captchaInput.value = '';
+                }
+            });
+        }
+
+        // Auto-uppercase CAPTCHA input
+        const captchaInput = document.getElementById('captcha');
+        if (captchaInput) {
+            captchaInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        // Load CAPTCHA on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadCaptcha);
+        } else {
+            loadCaptcha();
+        }
+
+        // Handle form submission
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const captcha = document.getElementById('captcha').value.trim();
+            const subscribeBtn = document.getElementById('subscribeBtn');
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            
+            if (!email) {
+                message.className = 'message error';
+                message.textContent = 'Please enter your email address.';
+                return;
+            }
+            
+            if (!captcha) {
+                message.className = 'message error';
+                message.textContent = 'Please enter the CAPTCHA.';
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                message.className = 'message error';
+                message.textContent = 'Please enter a valid email address.';
+                return;
+            }
+            
+            // Disable button and show loading
+            subscribeBtn.disabled = true;
+            loading.classList.add('show');
+            message.className = 'message';
+            message.textContent = '';
+            
+            // Get browser fingerprint
+            const fingerprint = getBrowserFingerprint();
+            
+            // Send request to server
+            fetch('/submit_fingerprint_request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    browser_fingerprint: fingerprint,
+                    captcha: captcha
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.remove('show');
+                subscribeBtn.disabled = false;
+                
+                if (data.success) {
+                    message.className = 'message success';
+                    message.textContent = data.message || 'Your request has been submitted successfully. We will review it shortly.';
+                    document.getElementById('emailForm').reset();
+                    // Reload CAPTCHA after successful submission
+                    loadCaptcha();
+                } else {
+                    message.className = 'message error';
+                    message.textContent = data.message || 'An error occurred. Please try again later.';
+                    // Reload CAPTCHA on error
+                    loadCaptcha();
+                    // Clear CAPTCHA input
+                    document.getElementById('captcha').value = '';
+                }
+            })
+            .catch(error => {
+                loading.classList.remove('show');
+                subscribeBtn.disabled = false;
+                message.className = 'message error';
+                message.textContent = 'An error occurred. Please try again later.';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
+

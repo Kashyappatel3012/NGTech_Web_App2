@@ -157,6 +157,67 @@
             font-size: 16px;
         }
         
+        .captcha-group {
+            margin-bottom: 20px;
+        }
+
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .captcha-image-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(100, 255, 218, 0.1);
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+        }
+
+        .captcha-image-container img {
+            height: 40px;
+            width: auto;
+            border-radius: 3px;
+        }
+
+        .captcha-image-container span {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: var(--accent);
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .refresh-captcha-btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-captcha-btn:hover {
+            background: var(--accent);
+            color: var(--primary);
+            transform: rotate(180deg);
+        }
+
+        .captcha-container input {
+            flex: 1;
+            text-transform: uppercase;
+        }
+
         .browser-fingerprint {
             margin-bottom: 20px;
             margin-top: 10px;

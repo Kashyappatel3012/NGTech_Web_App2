@@ -140,19 +140,11 @@
             // Combine all components and create hash
             const fingerprintString = components.join('|');
             
-            // Generate MD5 hash (using MD5 for backward compatibility with existing database)
-            // Note: MD5 is cryptographically weak but needed for compatibility with existing fingerprints
-            // TODO: Migrate all fingerprints to SHA-256 and then switch to SHA-256
+            // Generate MD5 hash (same as main application for consistency)
             if (typeof CryptoJS !== 'undefined') {
                 return CryptoJS.MD5(fingerprintString).toString();
             } else {
-                // Fallback: Use Web Crypto API if available (more secure)
-                if (window.crypto && window.crypto.subtle) {
-                    // Use async Web Crypto API for SHA-256
-                    // Note: This is async, so we'll use a synchronous fallback
-                    // In practice, the CryptoJS library should be available
-                }
-                // Fallback: simple hash if CryptoJS is not available (less secure but functional)
+                // Fallback: simple hash if CryptoJS is not available
                 let hash = 0;
                 for (let i = 0; i < fingerprintString.length; i++) {
                     const char = fingerprintString.charCodeAt(i);

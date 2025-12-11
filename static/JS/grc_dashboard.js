@@ -32,10 +32,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const barColors = perfScores.map(getBarColor);
     const barBorderColors = perfScores.map(getBarBorderColor);
 
-    // Bar Chart
-    const progressCtx = document.getElementById('progressChart');
-    if (progressCtx) {
-        new Chart(progressCtx.getContext('2d'), {
+    // Wait for Chart.js to load
+    let chartInitRetries = 0;
+    const MAX_CHART_INIT_RETRIES = 50; // Maximum 5 seconds (50 * 100ms)
+    
+    function initializeCharts() {
+        if (typeof Chart === 'undefined') {
+            chartInitRetries++;
+            if (chartInitRetries >= MAX_CHART_INIT_RETRIES) {
+                console.error('GRC: Chart.js failed to load after maximum retries. Please check your internet connection or CDN availability.');
+                return;
+            }
+            console.warn('GRC: Chart.js not loaded yet, retrying... (' + chartInitRetries + '/' + MAX_CHART_INIT_RETRIES + ')');
+            setTimeout(initializeCharts, 100);
+            return;
+        }
+        
+        // Reset retry counter on success
+        chartInitRetries = 0;
+
+        // Bar Chart - Previous Month Performance
+        const progressCtx = document.getElementById('progressChart');
+        if (progressCtx) {
+            console.log('GRC: Initializing progressChart...');
+            
+            // Destroy existing chart if any
+            if (progressCtx.chartInstance) {
+                progressCtx.chartInstance.destroy();
+                progressCtx.chartInstance = null;
+            }
+            
+            try {
+                // Ensure canvas is visible and has dimensions
+                const canvasContainer = progressCtx.parentElement;
+                if (canvasContainer) {
+                    canvasContainer.style.display = 'block';
+                    canvasContainer.style.width = '100%';
+                    canvasContainer.style.height = '260px';
+                    canvasContainer.style.position = 'relative';
+                }
+                
+                progressCtx.style.display = 'block';
+                progressCtx.width = progressCtx.offsetWidth || 500;
+                progressCtx.height = progressCtx.offsetHeight || 260;
+                
+                progressCtx.chartInstance = new Chart(progressCtx.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: [
@@ -56,42 +97,112 @@ document.addEventListener('DOMContentLoaded', function() {
                     categoryPercentage: 0.4
                 }]
             },
-            options: {
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            font: { size: 12 },
-                            callback: function(value) {
-                                const label = this.getLabelForValue(value);
-                                return label.split('\n');
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Score: ${context.parsed.y}/10`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: { size: 12 },
+                                    callback: function(value) {
+                                        const label = this.getLabelForValue(value);
+                                        return label.split('\n');
+                                    },
+                                    maxRotation: 0,
+                                    minRotation: 0,
+                                    autoSkip: false
+                                },
+                                grid: {
+                                    display: true
+                                }
                             },
-                            maxRotation: 0,
-                            minRotation: 0,
-                            autoSkip: false
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: { size: 11 }
+                                },
+                                grid: {
+                                    display: true
+                                }
+                            }
                         }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 10
                     }
-                }
+                });
+                console.log('GRC: Progress chart initialized successfully');
+            } catch (error) {
+                console.error('GRC: Error initializing progress chart:', error);
+                console.error('GRC: Error stack:', error.stack);
             }
-        });
-    }
+        } else {
+            console.error('GRC: progressChart canvas element not found!');
+        }
 
-    // --- Chart.js Line Chart for Last Year ---
-    const lastYearCtx = document.getElementById('lastYearChart');
-    if (lastYearCtx && window.performanceHistory) {
-        const historyData = window.performanceHistory;
-        
-        // Extract labels and data from performance history
-        const labels = historyData.map(item => `${item.month_name}\n'${item.year_short}`);
-        const data = historyData.map(item => item.average);
-        
-        new Chart(lastYearCtx.getContext('2d'), {
+        // --- Chart.js Line Chart for Last Year ---
+        const lastYearCtx = document.getElementById('lastYearChart');
+        if (lastYearCtx) {
+            console.log('GRC: Initializing lastYearChart...');
+            
+            // Destroy existing chart if any
+            if (lastYearCtx.chartInstance) {
+                lastYearCtx.chartInstance.destroy();
+                lastYearCtx.chartInstance = null;
+            }
+            
+            try {
+                // Ensure canvas is visible and has dimensions
+                const canvasContainer = lastYearCtx.parentElement;
+                if (canvasContainer) {
+                    canvasContainer.style.display = 'block';
+                    canvasContainer.style.width = '100%';
+                    canvasContainer.style.height = '260px';
+                    canvasContainer.style.position = 'relative';
+                }
+                
+                lastYearCtx.style.display = 'block';
+                lastYearCtx.width = lastYearCtx.offsetWidth || 500;
+                lastYearCtx.height = lastYearCtx.offsetHeight || 260;
+                
+                const historyData = window.performanceHistory && Array.isArray(window.performanceHistory) 
+                    ? window.performanceHistory 
+                    : [];
+                
+                if (historyData.length > 0) {
+                    // Extract labels and data safely
+                    const labels = [];
+                    const data = [];
+                    
+                    for (let i = 0; i < historyData.length; i++) {
+                        const item = historyData[i];
+                        if (item && item.month_name && item.year_short) {
+                            labels.push(`${item.month_name}\n'${item.year_short}`);
+                            data.push(item.average !== undefined && item.average !== null ? item.average : 0);
+                        }
+                    }
+                    
+                    if (labels.length > 0 && data.length > 0) {
+                        // Calculate min safely
+                        const validData = data.filter(d => !isNaN(d) && d !== null && d !== undefined && d >= 0);
+                        const dataMin = validData.length > 0 ? Math.min(...validData) : 0;
+                        const yMin = Math.max(0, dataMin > 0 ? (dataMin - 1) : 0);
+                        
+                        lastYearCtx.chartInstance = new Chart(lastYearCtx.getContext('2d'), {
             type: 'line',
             data: {
                 labels: labels,
@@ -112,69 +223,125 @@ document.addEventListener('DOMContentLoaded', function() {
                     pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 13 },
-                        padding: 12,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return 'Score: ' + context.parsed.y.toFixed(2);
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: {
+                                    duration: 1000,
+                                    easing: 'easeInOutQuart'
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        enabled: true,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        titleFont: { size: 14 },
+                                        bodyFont: { size: 13 },
+                                        padding: 12,
+                                        cornerRadius: 8,
+                                        displayColors: false,
+                                        callbacks: {
+                                            label: function(context) {
+                                                return 'Score: ' + context.parsed.y.toFixed(2);
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: true
+                                        },
+                                        ticks: {
+                                            font: { size: 11 },
+                                            maxRotation: 0,
+                                            minRotation: 0
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: dataMin === 0,
+                                        min: yMin,
+                                        max: 10,
+                                        grid: {
+                                            display: true,
+                                            color: 'rgba(0, 0, 0, 0.05)'
+                                        },
+                                        ticks: {
+                                            font: { size: 11 },
+                                            stepSize: 1
+                                        }
+                                    }
+                                },
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index'
+                                }
                             }
-                        }
+                        });
+                        console.log('GRC: Last year chart initialized successfully');
+                    } else {
+                        console.warn('GRC: No valid data for last year chart');
                     }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: { size: 11 },
-                            maxRotation: 0,
-                            minRotation: 0
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 10,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            font: { size: 11 },
-                            stepSize: 2
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
+                } else {
+                    console.warn('GRC: No performance history data available');
                 }
+            } catch (error) {
+                console.error('GRC: Error initializing last year chart:', error);
+                console.error('GRC: Error stack:', error.stack);
             }
-        });
+        } else {
+            console.error('GRC: lastYearChart canvas element not found!');
+        }
     }
+    
+    // Start chart initialization
+    initializeCharts();
 
     // Accordion functionality
     document.querySelectorAll('.accordion-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             this.classList.toggle('active');
             const content = this.nextElementSibling;
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                this.querySelector('.fa-chevron-down').style.transform = 'rotate(0deg)';
+            const chevron = this.querySelector('.fa-chevron-down');
+            
+            // Check if content element exists and has the correct class
+            if (!content || !content.classList.contains('accordion-content')) {
+                console.error('Accordion content not found or incorrect class');
+                return;
+            }
+            
+            // Get the current max-height value (inline style or computed)
+            const currentMaxHeight = content.style.maxHeight;
+            const computedStyle = window.getComputedStyle(content);
+            const computedMaxHeight = computedStyle.maxHeight;
+            
+            // Determine if accordion is currently open
+            // It's open if maxHeight is set and not 0px or 0
+            const isOpen = (currentMaxHeight && 
+                           currentMaxHeight !== '0px' && 
+                           currentMaxHeight !== '0' &&
+                           currentMaxHeight !== '') ||
+                           (computedMaxHeight && 
+                            computedMaxHeight !== '0px' && 
+                            computedMaxHeight !== 'none');
+            
+            if (isOpen) {
+                // Close accordion
+                content.style.maxHeight = '0px';
+                if (chevron) {
+                    chevron.style.transform = 'rotate(0deg)';
+                }
             } else {
+                // Open accordion
                 content.style.maxHeight = content.scrollHeight + "px";
-                this.querySelector('.fa-chevron-down').style.transform = 'rotate(180deg)';
+                if (chevron) {
+                    chevron.style.transform = 'rotate(180deg)';
+                }
             }
         });
     });
