@@ -647,37 +647,79 @@ def migrate_database():
         except:
             pass
     
+    # Check and add created_at column with proper transaction handling
     try:
-        # Try to add created_at column to user table if it doesn't exist
-        db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN created_at TIMESTAMP'))
-        db.session.commit()
-        print("SUCCESS: Added created_at column to user table")
-    except Exception as e:
-        error_msg = str(e).lower()
-        if 'duplicate column' in error_msg or 'already exists' in error_msg or 'no such table' in error_msg:
-            pass
+        # First check if column exists (PostgreSQL way)
+        result = db.session.execute(db.text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='user' AND column_name='created_at'
+        """))
+        column_exists = result.fetchone() is not None
+        
+        if not column_exists:
+            db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN created_at TIMESTAMP'))
+            db.session.commit()
+            print("SUCCESS: Added created_at column to user table")
         else:
-            print(f"Migration note for created_at: {e}")
+            print("INFO: created_at column already exists")
+    except Exception as e:
+        # Fallback: try direct ALTER (for SQLite or if info_schema not available)
         try:
             db.session.rollback()
         except:
             pass
+        try:
+            db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN created_at TIMESTAMP'))
+            db.session.commit()
+            print("SUCCESS: Added created_at column to user table")
+        except Exception as e2:
+            error_msg = str(e2).lower()
+            if 'duplicate column' in error_msg or 'already exists' in error_msg or 'no such table' in error_msg:
+                pass  # Column already exists, which is fine
+            else:
+                print(f"Migration note for created_at: {e2}")
+            try:
+                db.session.rollback()
+            except:
+                pass
     
+    # Check and add deleted_at column with proper transaction handling
     try:
-        # Try to add deleted_at column to user table if it doesn't exist
-        db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN deleted_at TIMESTAMP'))
-        db.session.commit()
-        print("SUCCESS: Added deleted_at column to user table")
-    except Exception as e:
-        error_msg = str(e).lower()
-        if 'duplicate column' in error_msg or 'already exists' in error_msg or 'no such table' in error_msg:
-            pass
+        # First check if column exists (PostgreSQL way)
+        result = db.session.execute(db.text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='user' AND column_name='deleted_at'
+        """))
+        column_exists = result.fetchone() is not None
+        
+        if not column_exists:
+            db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN deleted_at TIMESTAMP'))
+            db.session.commit()
+            print("SUCCESS: Added deleted_at column to user table")
         else:
-            print(f"Migration note for deleted_at: {e}")
+            print("INFO: deleted_at column already exists")
+    except Exception as e:
+        # Fallback: try direct ALTER (for SQLite or if info_schema not available)
         try:
             db.session.rollback()
         except:
             pass
+        try:
+            db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN deleted_at TIMESTAMP'))
+            db.session.commit()
+            print("SUCCESS: Added deleted_at column to user table")
+        except Exception as e2:
+            error_msg = str(e2).lower()
+            if 'duplicate column' in error_msg or 'already exists' in error_msg or 'no such table' in error_msg:
+                pass  # Column already exists, which is fine
+            else:
+                print(f"Migration note for deleted_at: {e2}")
+            try:
+                db.session.rollback()
+            except:
+                pass
     
     # Update existing users' created_at if it's NULL, using EmployeeData.created_at as fallback
     try:
@@ -1111,18 +1153,30 @@ def validate_fingerprint():
             # Mark validation as attempted
             session['fingerprint_validation_attempted'] = True
             
-            # Debug: Check what's stored for HR Manager
+            # Debug: Check what's stored for HR Manager and log for debugging
             hr_user = User.query.filter_by(username='hr_user').first() or User.query.filter_by(department='HR').first()
             hr_stored = None
             if hr_user:
                 emp_data = EmployeeData.query.filter_by(user_id=hr_user.id).first()
                 if emp_data and emp_data.browser_fingerprint:
                     hr_stored = emp_data.browser_fingerprint
+                    # Log for debugging (only in production to help diagnose)
+                    logger.warning(f"Fingerprint mismatch - Received: {browser_fingerprint}, Stored: {hr_stored}, Lengths: R={len(browser_fingerprint)}, S={len(hr_stored)}")
             
-            # Return invalid fingerprint response (frontend will redirect to custom error page)
+            # Return invalid fingerprint response with debug info (only in development)
+            debug_info = {}
+            if app.config.get('DEBUG', False):
+                debug_info = {
+                    'received': browser_fingerprint,
+                    'stored': hr_stored,
+                    'received_length': len(browser_fingerprint) if browser_fingerprint else 0,
+                    'stored_length': len(hr_stored) if hr_stored else 0
+                }
+            
             return jsonify({
                 'valid': False, 
-                'error': 'Invalid fingerprint'
+                'error': 'Invalid fingerprint',
+                **debug_info
             }), 200
     
     except Exception as e:
@@ -1167,6 +1221,97 @@ def fingerprint_error():
 def generate_fingerprint():
     """Page to generate and display browser fingerprint"""
     return render_template('generate_fingerprint.html')
+
+@app.route('/debug_fingerprint')
+def debug_fingerprint():
+    """Debug endpoint to check fingerprint matching"""
+    try:
+        # Get HR Manager info
+        hr_user = User.query.filter_by(username='hr_user').first() or User.query.filter_by(department='HR').first()
+        hr_stored = None
+        if hr_user:
+            emp_data = EmployeeData.query.filter_by(user_id=hr_user.id).first()
+            if emp_data and emp_data.browser_fingerprint:
+                hr_stored = emp_data.browser_fingerprint
+        
+        # Get all users with fingerprints
+        all_employees = EmployeeData.query.filter(EmployeeData.browser_fingerprint.isnot(None)).all()
+        fingerprints_info = []
+        for emp in all_employees:
+            user = User.query.get(emp.user_id)
+            if user:
+                fingerprints_info.append({
+                    'username': user.username,
+                    'name': user.employee_name,
+                    'department': user.department,
+                    'fingerprint': emp.browser_fingerprint
+                })
+        
+        return f"""
+        <html>
+        <head><title>Fingerprint Debug</title>
+        <style>
+            body {{ font-family: Arial; padding: 20px; background: #f5f5f5; }}
+            .container {{ background: white; padding: 20px; border-radius: 10px; max-width: 1200px; margin: 0 auto; }}
+            h1 {{ color: #667eea; }}
+            .info-box {{ background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #667eea; }}
+            .fingerprint {{ font-family: monospace; background: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+            th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }}
+            th {{ background: #667eea; color: white; }}
+            .match {{ color: green; font-weight: bold; }}
+            .mismatch {{ color: red; font-weight: bold; }}
+        </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🔍 Fingerprint Debug Information</h1>
+                
+                <div class="info-box">
+                    <h3>HR Manager Fingerprint (Stored in Database)</h3>
+                    <p><strong>Username:</strong> {hr_user.username if hr_user else 'Not found'}</p>
+                    <p><strong>Name:</strong> {hr_user.employee_name if hr_user else 'Not found'}</p>
+                    <p><strong>Stored Fingerprint:</strong></p>
+                    <div class="fingerprint">{hr_stored if hr_stored else 'No fingerprint stored'}</div>
+                    <p><strong>Length:</strong> {len(hr_stored) if hr_stored else 0} characters</p>
+                </div>
+                
+                <div class="info-box">
+                    <h3>📝 Instructions</h3>
+                    <p>1. Visit <a href="/generate_fingerprint" target="_blank">/generate_fingerprint</a> to see your current browser's fingerprint</p>
+                    <p>2. Compare it with the stored fingerprint above</p>
+                    <p>3. If they don't match, update the database with your current fingerprint</p>
+                    <p>4. The fingerprint should be the same on localhost and production (HTTP/HTTPS)</p>
+                </div>
+                
+                <h3>All Stored Fingerprints</h3>
+                <table>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Fingerprint</th>
+                    </tr>
+                    {''.join([f'''
+                    <tr>
+                        <td>{info['username']}</td>
+                        <td>{info['name']}</td>
+                        <td>{info['department']}</td>
+                        <td class="fingerprint">{info['fingerprint']}</td>
+                    </tr>
+                    ''' for info in fingerprints_info]) if fingerprints_info else '<tr><td colspan="4">No fingerprints stored</td></tr>'}
+                </table>
+                
+                <p style="margin-top: 20px;">
+                    <a href="/login">← Back to Login</a> | 
+                    <a href="/generate_fingerprint">Generate Fingerprint</a>
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+    except Exception as e:
+        return f"<html><body><h1>Error</h1><p>{str(e)}</p></body></html>", 500
 
 @app.route('/submit_complaint', methods=['POST'])
 @login_required
@@ -1519,21 +1664,28 @@ def login():
         
         # Validate browser fingerprint before checking user
         if not browser_fingerprint:
+            logger.warning(f"Login attempt without browser fingerprint from IP: {ip_address}")
             abort(404)
         
         is_valid, fingerprint_user = validate_browser_fingerprint(browser_fingerprint, user)
         
         if not is_valid:
-            # Fingerprint doesn't match - return 404
+            # Fingerprint doesn't match - log for debugging
             if user:
+                emp_data = EmployeeData.query.filter_by(user_id=user.id).first()
+                stored_fp = emp_data.browser_fingerprint if emp_data else None
+                logger.warning(f"Fingerprint mismatch for user {username} - Received: {browser_fingerprint}, Stored: {stored_fp}")
+                
                 activity = LoginActivity(
                     user_id=user.id,
                     activity_type='failed_attempt',
                     ip_address=ip_address,
-                    details=f"Browser fingerprint mismatch. Expected fingerprint for user: {username}"
+                    details=f"Browser fingerprint mismatch. Received: {browser_fingerprint[:16]}..., Stored: {stored_fp[:16] if stored_fp else 'None'}..."
                 )
                 db.session.add(activity)
                 db.session.commit()
+            else:
+                logger.warning(f"Fingerprint validation failed for unknown user - Fingerprint: {browser_fingerprint}")
             abort(404)
         
         if not user:
