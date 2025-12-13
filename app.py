@@ -34,13 +34,45 @@ try:
 except ImportError:
     PIL_AVAILABLE = False
 
+# Configure logging with UTF-8 encoding to handle Unicode characters
+import sys
+
+# Fix Windows console encoding for Unicode
+if sys.platform == 'win32':
+    try:
+        # Try to set UTF-8 encoding for stdout/stderr
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        if hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except:
+        pass
+
+# Create a custom StreamHandler that handles Unicode properly
+class UnicodeStreamHandler(logging.StreamHandler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            # Encode to UTF-8 and replace any problematic characters
+            if hasattr(stream, 'buffer'):
+                stream.buffer.write(msg.encode('utf-8', errors='replace'))
+                stream.buffer.write(self.terminator.encode('utf-8'))
+                stream.buffer.flush()
+            else:
+                stream.write(msg)
+                stream.write(self.terminator)
+                stream.flush()
+        except Exception:
+            self.handleError(record)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
+        logging.FileHandler('app.log', encoding='utf-8', errors='replace'),
+        UnicodeStreamHandler(sys.stdout)
     ]
 )
 from encryption_utils import get_encryption_manager, encrypt_data, decrypt_data
@@ -228,15 +260,22 @@ if database_url:
     # Convert DATABASE_URL format (postgres://) to SQLAlchemy format (postgresql://)
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    # Add SSL mode for Render.com and other cloud providers (if not already present)
+    if 'sslmode' not in database_url and '?' not in database_url:
+        database_url += '?sslmode=require'
+    elif 'sslmode' not in database_url and '?' in database_url:
+        database_url += '&sslmode=require'
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("✅ Using PostgreSQL database (Production mode)")
+    print("[OK] Using PostgreSQL database (Production mode)")
 else:
     # Development: Use SQLite
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'db.sqlite')
     if not os.path.exists(os.path.dirname(db_path)):
         os.makedirs(os.path.dirname(db_path), mode=0o700, exist_ok=True)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-    print("✅ Using SQLite database (Development mode)")
+    print("[OK] Using SQLite database (Development mode)")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -586,11 +625,54 @@ def validate_browser_fingerprint(browser_fingerprint, user=None):
         # Direct comparison (both should be MD5 now after reverting JavaScript to MD5)
         # Normalize by stripping whitespace
         stored_fingerprint = stored_fingerprint.strip() if stored_fingerprint else ''
-        return stored_fingerprint == browser_fingerprint, user
+        browser_fp_clean = browser_fingerprint.strip()
+        
+        # Log comparison for debugging
+        match = stored_fingerprint == browser_fp_clean
+        try:
+            logger = logging.getLogger(__name__)
+            if not match:
+                logger.warning(f"Fingerprint mismatch for user {user.username}: stored='{stored_fingerprint}' (len={len(stored_fingerprint)}) vs received='{browser_fp_clean}' (len={len(browser_fp_clean)})")
+            else:
+                logger.debug(f"Fingerprint match for user {user.username}")
+        except:
+            pass
+        
+        return match, user
     
     # If user is None, check if fingerprint exists for any user
     # Need to check all fingerprints (can't query encrypted data directly)
-    all_employee_data = EmployeeData.query.filter(EmployeeData.browser_fingerprint.isnot(None)).all()
+    try:
+        all_employee_data = EmployeeData.query.filter(EmployeeData.browser_fingerprint.isnot(None)).all()
+    except Exception as db_error:
+        # Handle database connection errors (SSL, timeout, etc.)
+        try:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Database query error in validate_browser_fingerprint: {db_error}")
+        except:
+            pass
+        # Try to refresh the database connection
+        try:
+            db.session.rollback()
+            db.session.close()
+            # Retry the query once
+            all_employee_data = EmployeeData.query.filter(EmployeeData.browser_fingerprint.isnot(None)).all()
+        except Exception as retry_error:
+            try:
+                logger = logging.getLogger(__name__)
+                logger.error(f"Database retry failed: {retry_error}")
+            except:
+                pass
+            # Return False if database is unavailable
+            return False, None
+    
+    # Log for debugging in production
+    try:
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Checking {len(all_employee_data)} stored fingerprints against: {browser_fingerprint[:16]}...")
+    except:
+        pass  # Logger not available, continue
+    
     for emp_data in all_employee_data:
         stored_value = emp_data.browser_fingerprint
         stored_fingerprint = None
@@ -599,19 +681,39 @@ def validate_browser_fingerprint(browser_fingerprint, user=None):
         if enc_manager:
             try:
                 stored_fingerprint = enc_manager.decrypt(stored_value)
-            except:
+            except Exception as e:
                 # Decryption failed - assume it's stored as plain text
+                # This is expected for new plain text format
                 stored_fingerprint = stored_value
         else:
             stored_fingerprint = stored_value
         
         # Normalize by stripping whitespace
         stored_fingerprint = stored_fingerprint.strip() if stored_fingerprint else ''
+        browser_fp_clean = browser_fingerprint.strip()
         
-        if stored_fingerprint == browser_fingerprint:
-            user_found = User.query.get(emp_data.user_id)
+        # Log comparison for debugging
+        try:
+            logger = logging.getLogger(__name__)
+            if stored_fingerprint and browser_fp_clean:
+                logger.debug(f"Comparing: stored='{stored_fingerprint[:16]}...' (len={len(stored_fingerprint)}) vs received='{browser_fp_clean[:16]}...' (len={len(browser_fp_clean)})")
+        except:
+            pass
+        
+        if stored_fingerprint == browser_fp_clean:
+            user_found = db.session.get(User, emp_data.user_id)  # Use Session.get() instead of Query.get()
+            try:
+                logger = logging.getLogger(__name__)
+                logger.info(f"Fingerprint match found for user: {user_found.username if user_found else 'Unknown'}")
+            except:
+                pass
             return True, user_found
     
+    try:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"No matching fingerprint found. Checked {len(all_employee_data)} stored fingerprints.")
+    except:
+        pass
     return False, None
 
 def migrate_database():
@@ -1135,11 +1237,57 @@ def validate_fingerprint():
         browser_fingerprint = data.get('browser_fingerprint') if data else None
         
         if not browser_fingerprint:
+            try:
+                logger = logging.getLogger(__name__)
+                logger.warning("validate_fingerprint: No fingerprint provided")
+            except:
+                pass
             return jsonify({'valid': False, 'error': 'Fingerprint required'}), 400
         
-        is_valid, user_found = validate_browser_fingerprint(browser_fingerprint)
+        # Clean the fingerprint
+        browser_fingerprint = browser_fingerprint.strip()
+        
+        # Validate format (should be 32 chars for MD5)
+        if len(browser_fingerprint) != 32:
+            try:
+                logger = logging.getLogger(__name__)
+                logger.warning(f"validate_fingerprint: Invalid fingerprint length: {len(browser_fingerprint)} (expected 32)")
+            except:
+                pass
+            return jsonify({
+                'valid': False, 
+                'error': f'Invalid fingerprint format. Length: {len(browser_fingerprint)}, expected 32'
+            }), 200
+        
+        try:
+            logger = logging.getLogger(__name__)
+            logger.info(f"validate_fingerprint: Validating fingerprint: {browser_fingerprint[:16]}...")
+        except:
+            pass
+        
+        try:
+            is_valid, user_found = validate_browser_fingerprint(browser_fingerprint)
+        except Exception as validation_error:
+            # Handle database errors during validation
+            try:
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error during fingerprint validation: {validation_error}")
+            except:
+                pass
+            # Return error response instead of crashing
+            session['fingerprint_validation_attempted'] = True
+            return jsonify({
+                'valid': False, 
+                'error': 'Database connection error. Please try again.',
+                'debug': str(validation_error) if app.config.get('DEBUG') else None
+            }), 500
         
         if is_valid:
+            try:
+                logger = logging.getLogger(__name__)
+                logger.info(f"validate_fingerprint: [OK] Valid - User: {user_found.username if user_found else 'Unknown'}")
+            except:
+                pass
             # Store fingerprint in session for later validation (try to encrypt, but handle errors)
             try:
                 enc_manager = get_encryption_manager()
@@ -1150,32 +1298,63 @@ def validate_fingerprint():
             session['fingerprint_validation_attempted'] = True
             return jsonify({'valid': True, 'username': user_found.username if user_found else None})
         else:
+            try:
+                logger = logging.getLogger(__name__)
+                logger.warning(f"validate_fingerprint: [ERROR] Invalid fingerprint: {browser_fingerprint[:16]}...")
+            except:
+                pass
             # Mark validation as attempted
             session['fingerprint_validation_attempted'] = True
             
             # Debug: Check what's stored for HR Manager and log for debugging
             hr_user = User.query.filter_by(username='hr_user').first() or User.query.filter_by(department='HR').first()
             hr_stored = None
+            all_fingerprints_info = []
             if hr_user:
                 emp_data = EmployeeData.query.filter_by(user_id=hr_user.id).first()
                 if emp_data and emp_data.browser_fingerprint:
-                    hr_stored = emp_data.browser_fingerprint
-                    # Log for debugging (only in production to help diagnose)
-                    logger.warning(f"Fingerprint mismatch - Received: {browser_fingerprint}, Stored: {hr_stored}, Lengths: R={len(browser_fingerprint)}, S={len(hr_stored)}")
+                    hr_stored = emp_data.browser_fingerprint.strip()
+                    try:
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f"validate_fingerprint: HR Manager stored: {hr_stored} (len={len(hr_stored)})")
+                    except:
+                        pass
             
-            # Return invalid fingerprint response with debug info (only in development)
-            debug_info = {}
-            if app.config.get('DEBUG', False):
-                debug_info = {
-                    'received': browser_fingerprint,
-                    'stored': hr_stored,
-                    'received_length': len(browser_fingerprint) if browser_fingerprint else 0,
-                    'stored_length': len(hr_stored) if hr_stored else 0
-                }
+            # Get all stored fingerprints for debugging (with error handling)
+            try:
+                all_employees = EmployeeData.query.filter(EmployeeData.browser_fingerprint.isnot(None)).all()
+            except Exception as db_error:
+                try:
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Database error getting fingerprints for debug: {db_error}")
+                except:
+                    pass
+                all_employees = []
+            
+            for emp in all_employees:
+                user = db.session.get(User, emp.user_id)
+                if user:
+                    stored_fp = emp.browser_fingerprint.strip() if emp.browser_fingerprint else ''
+                    all_fingerprints_info.append({
+                        'username': user.username,
+                        'fingerprint': stored_fp[:16] + '...' if len(stored_fp) > 16 else stored_fp,
+                        'length': len(stored_fp)
+                    })
+            
+            # Always return debug info (not just in DEBUG mode) for production troubleshooting
+            debug_info = {
+                'received': browser_fingerprint,
+                'received_length': len(browser_fingerprint),
+                'hr_stored': hr_stored,
+                'hr_stored_length': len(hr_stored) if hr_stored else 0,
+                'all_fingerprints_count': len(all_fingerprints_info),
+                'help_url': '/generate_fingerprint',
+                'debug_url': '/debug_fingerprint'
+            }
             
             return jsonify({
                 'valid': False, 
-                'error': 'Invalid fingerprint',
+                'error': 'Invalid fingerprint - visit /generate_fingerprint to see your fingerprint',
                 **debug_info
             }), 200
     
@@ -5835,7 +6014,7 @@ try:
     
 except Exception as e:
     logging.error(f"Failed to start email scheduler: {str(e)}")
-    print(f"⚠️ Warning: Failed to start email scheduler: {str(e)}")
+    print(f"[WARNING] Failed to start email scheduler: {str(e)}")
 
 if __name__ == '__main__':
     # Run migrations on startup
