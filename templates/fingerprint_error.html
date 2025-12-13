@@ -263,13 +263,16 @@ Don’t miss any critical security alerts. Join now!
             components.push(navigator.platform || '');
             
             // Hardware Concurrency (stable)
-            components.push(navigator.hardwareConcurrency?.toString() || '');
+            const hardwareConcurrency = navigator.hardwareConcurrency?.toString() || 'N/A';
+            components.push(hardwareConcurrency);
             
             // Device Memory (if available, stable)
-            components.push(navigator.deviceMemory?.toString() || '');
+            const deviceMemory = navigator.deviceMemory?.toString() || 'N/A';
+            components.push(deviceMemory);
             
             // Max Touch Points (stable)
-            components.push(navigator.maxTouchPoints?.toString() || '');
+            const maxTouchPoints = navigator.maxTouchPoints?.toString() || '0';
+            components.push(maxTouchPoints);
             
             // Combine all components and create hash
             const fingerprintString = components.join('|');
