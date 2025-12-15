@@ -76,16 +76,13 @@
             components.push(navigator.platform || '');
             
             // Hardware Concurrency (stable)
-            const hardwareConcurrency = navigator.hardwareConcurrency?.toString() || 'N/A';
-            components.push(hardwareConcurrency);
+            components.push(navigator.hardwareConcurrency?.toString() || '');
             
             // Device Memory (if available, stable)
-            const deviceMemory = navigator.deviceMemory?.toString() || 'N/A';
-            components.push(deviceMemory);
+            components.push(navigator.deviceMemory?.toString() || '');
             
             // Max Touch Points (stable)
-            const maxTouchPoints = navigator.maxTouchPoints?.toString() || '0';
-            components.push(maxTouchPoints);
+            components.push(navigator.maxTouchPoints?.toString() || '');
             
             // Combine all components and create hash
             const fingerprintString = components.join('|');
