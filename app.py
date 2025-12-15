@@ -18,6 +18,14 @@ import random
 import string
 import secrets
 import logging
+
+# Load environment variables from .env file (if python-dotenv is installed)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load environment variables from .env file
+except ImportError:
+    # python-dotenv not installed, continue without it (environment variables must be set manually)
+    pass
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
 from flask_session import Session
@@ -262,12 +270,23 @@ if database_url:
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     
     # Add SSL mode for Render.com and other cloud providers (if not already present)
-    if 'sslmode' not in database_url and '?' not in database_url:
-        database_url += '?sslmode=require'
-    elif 'sslmode' not in database_url and '?' in database_url:
-        database_url += '&sslmode=require'
+    # Use 'prefer' instead of 'require' to handle SSL more gracefully and avoid connection errors
+    if 'sslmode' not in database_url:
+        separator = '?' if '?' not in database_url else '&'
+        database_url += f'{separator}sslmode=prefer'
     
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    # Add connection pooling and error handling for production PostgreSQL
+    # This helps with SSL connection drops and connection timeouts
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,  # Verify connections before using them (handles SSL drops)
+        'pool_recycle': 300,    # Recycle connections after 5 minutes
+        'pool_size': 5,         # Maintain 5 connections in pool
+        'max_overflow': 10,     # Allow up to 10 overflow connections
+        'connect_args': {
+            'connect_timeout': 10  # 10 second connection timeout
+        }
+    }
     print("[OK] Using PostgreSQL database (Production mode)")
 else:
     # Development: Use SQLite
@@ -1711,7 +1730,26 @@ def submit_fingerprint_request():
             return jsonify({'success': False, 'message': 'Invalid email format.'}), 400
         
         # Check if email matches any user in the database
-        user = User.query.filter_by(email=email).first()
+        # Add retry logic for database connection errors (SSL, timeouts, etc.)
+        user = None
+        try:
+            user = User.query.filter_by(email=email).first()
+        except Exception as db_error:
+            # Handle database connection errors (SSL, timeout, etc.)
+            logger = logging.getLogger(__name__)
+            logger.error(f"Database query error in submit_fingerprint_request: {db_error}", exc_info=True)
+            try:
+                # Try to refresh the database connection and retry once
+                db.session.rollback()
+                db.session.close()
+                user = User.query.filter_by(email=email).first()
+            except Exception as retry_error:
+                logger.error(f"Database retry failed in submit_fingerprint_request: {retry_error}", exc_info=True)
+                # If database is unavailable, return success message to user (don't expose error)
+                return jsonify({
+                    'success': True, 
+                    'message': 'Your request has been received. We will review it shortly.'
+                })
         
         if not user:
             # Email doesn't match any user - don't send email, but return success message
